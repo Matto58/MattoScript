@@ -11,8 +11,8 @@ namespace Mattodev.MattoScript.Builder
             MTSConsole c = new();
             Dictionary<string, string> vars = new()
             {
-                { "ver.engine", MTSInfo.engVer },
-                { "ver.mtscript", MTSInfo.mtsVer }
+                { "$ver.engine", MTSInfo.engVer },
+                { "$ver.mtscript", MTSInfo.mtsVer }
             };
             foreach (string l in interLangLns)
             {
