@@ -32,6 +32,7 @@ namespace Mattodev.MattoScript.Builder
                                 err = new MTSError.UnassignedVar();
                                 err.message += ln[2];
                                 err.ThrowErr("<thisfile>", c.stopIndex, ref c);
+                                goto end;
                             }
                             else BuiltIns.Console.conOut(ref c, (ln[2][0] != "$"[0] ? ln[2] : vVal), ln[1] == "1");
                             //Console.WriteLine(c.cont);
