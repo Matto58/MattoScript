@@ -19,7 +19,7 @@ namespace Mattodev.MattoScript.Shell
 
                     MTSError err;
                     MTSConsole con = new();
-                    switch (ln[0])
+                    switch (ln[0].ToLower())
                     {
                         case "exit": goto end;
                         case "tointerf":
@@ -91,13 +91,27 @@ namespace Mattodev.MattoScript.Shell
                                 err.ThrowErr("<shell>", -1, ref con);
                             }
                             break;
+                        case "tointerf_save":
+                            try
+                            {
+                                string[] code = InterLang.toInterLang(File.ReadAllText(ln[1]), ln[1]);
+                                File.WriteAllText($"{ln[1].Split(".")[0]}.mti", strjoin(code, "\n"));
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                err = new MTSError.TooLittleArgs();
+                                err.message += $"{ln.Length - 1}";
+                                err.ThrowErr("<shell>", -1, ref con);
+                            }
+                            break;
                         default:
                             err = new MTSError.InvalidCommand();
                             err.message += ln[0];
                             err.ThrowErr("<shell>", -1, ref con);
                             break;
                     }
-                    Console.WriteLine(con.cont);
+                    con.cont += "\n";
+                    con.disp();
                 }
             }
             end: return 0;

@@ -7,7 +7,6 @@ namespace Mattodev.MattoScript.Builder
         public static string[] toInterLang(string[] lns, string fileName)
         {
             List<string> oc = new();
-            Dictionary<string, string> vars = new();
             for (int i = 0; i < lns.Length; i++)
             {
                 string l = lns[i].Split("#")[0];
@@ -52,10 +51,22 @@ namespace Mattodev.MattoScript.Builder
                             }
                             break;
                         case "halt": goto end;
+                        case "nop": break;
                         case "throw":
                             try
                             {
                                 oc.Add($"{i};INTERNAL:ERR_THROW,{strjoin(ln[1..])}");
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                oc.Add($"{i};INTERNAL:ERR_THROW,TooLittleArgs,{fileName},{i},{ln.Length}");
+                                goto end;
+                            }
+                            break;
+                        case "con.input":
+                            try
+                            {
+                                oc.Add($"{i};CON:INPUT,{ln[1]}");
                             }
                             catch (IndexOutOfRangeException)
                             {

@@ -6,18 +6,21 @@ namespace Mattodev.MattoScript.Engine
     {
         public int code { get; set; }
         public string message { get; set; }
+        public string id { get; set; }
 
         public MTSError()
         {
             code = 0;
             message = "";
+            id = "MTSError";
         }
 
         public int ThrowErr(string fileName, int line, ref MTSConsole con)
         {
             con.cont += (
-                $"Error! MTS-{Convert.ToString(code, 16)}: {(code != -1 ? $"'{message}'" : message)}\n" +
-                $"\tLine {line+1} in file {fileName}" 
+                $"Error! ({id}) MTS-{Convert.ToString(code, 16)}: {(code != -1 ? $"'{message}'" : message)}\n" +
+                $"\tLine {line + 1} in file {fileName}" +
+                (code == -1 ? "\n\tPlease report this immediately: https://github.com/Matto58/MattoScript/issues/" : "")
             );
             return code;
         }
@@ -28,6 +31,7 @@ namespace Mattodev.MattoScript.Engine
             {
                 code = 1;
                 message = "Invalid command: ";
+                id = "InvalidCommand";
             }
         }
         public class TooLittleArgs : MTSError
@@ -36,6 +40,7 @@ namespace Mattodev.MattoScript.Engine
             {
                 code = 2;
                 message = "Too little args; found ";
+                id = "TooLittleArgs";
             }
         }
         public class FileNotFound : MTSError
@@ -44,6 +49,7 @@ namespace Mattodev.MattoScript.Engine
             {
                 code = 3;
                 message = "File not found: ";
+                id = "FileNotFound";
             }
         }
         public class UnassignedVar : MTSError
@@ -52,6 +58,7 @@ namespace Mattodev.MattoScript.Engine
             {
                 code = 4;
                 message = "Tried to use the unassigned variable ";
+                id = "UnassignedVar";
             }
         }
         public class NoVarVal : MTSError
@@ -60,16 +67,18 @@ namespace Mattodev.MattoScript.Engine
             {
                 code = 5;
                 message = "Variable cannot be empty: ";
+                id = "NoVarVal";
             }
         }
 
 
         public class InternalError : MTSError
         {
-            public InternalError()
+            public InternalError(Exception e)
             {
                 code = -1;
-                message = "Internal error: ";
+                message = "Internal error:\n\t";
+                id = e.GetType().ToString();
             }
         }
     }

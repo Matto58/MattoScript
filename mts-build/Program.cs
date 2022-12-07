@@ -21,18 +21,18 @@ namespace Mattodev.MattoScript.Builder
             try
             {
                 code = File.ReadAllLines(args[0]);
-            }/*
+            }
             catch (FileNotFoundException)
             {
                 MTSError.FileNotFound err = new();
                 err.message += args[0];
-                err.ThrowErr("<build>", -1, ref c);
+                err.ThrowErr("mts-build.dll", -1, ref c);
                 c.exitCode = err.code;
                 goto end;
-            }*/
+            }
             catch (Exception e)
             {
-                MTSError.InternalError err = new();
+                MTSError.InternalError err = new(e);
                 err.message += $"\n\t{e.Message}";
                 err.ThrowErr("mts-build.dll", -1, ref c);
                 c.exitCode = err.code;
