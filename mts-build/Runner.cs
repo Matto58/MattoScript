@@ -1,5 +1,4 @@
 ﻿using Mattodev.MattoScript.Engine;
-using System.Numerics;
 using static Mattodev.MattoScript.Engine.CoreEng;
 
 namespace Mattodev.MattoScript.Builder
@@ -14,6 +13,7 @@ namespace Mattodev.MattoScript.Builder
                 { "$ver.engine", MTSInfo.engVer },
                 { "$ver.mtscript", MTSInfo.mtsVer }
             };
+            c.vars = vars;
             foreach (string l in interLangLns)
             {
                 string[] i = l.Split(";");
@@ -21,6 +21,7 @@ namespace Mattodev.MattoScript.Builder
                 c.stopIndex = int.Parse(i[0]);
                 //Console.WriteLine(l);
                 MTSError err;
+                MTSConsole flexC;
                 try
                 {
                     switch (ln[0])
@@ -61,7 +62,36 @@ namespace Mattodev.MattoScript.Builder
                             string[] eq = ln[1].Split("=");
                             vars[eq[0]] = eq[1];
                             break;
+
+                        // the FLEX module: FiLe EXecutor
+                        case "FLEX:EXECFL":
+                            try
+                            {
+                                flexC = runFromCode(File.ReadAllLines(ln[1]), ln[1]);
+                                c += flexC;
+                            }
+                            catch (FileNotFoundException)
+                            {
+                                err = new MTSError.FileNotFound();
+                                err.message += ln[1];
+                                err.ThrowErr("<shell>", -1, ref c);
+                            }
+                            break;
+                        case "FLEX:LOADVARS":
+                            try
+                            {
+                                flexC = runFromCode(File.ReadAllLines(ln[1]), ln[1]);
+                                c.copyVars(flexC);
+                            }
+                            catch (FileNotFoundException)
+                            {
+                                err = new MTSError.FileNotFound();
+                                err.message += ln[1];
+                                err.ThrowErr("<shell>", -1, ref c);
+                            }
+                            break;
                     }
+                    c.vars = vars;
                 }
                 catch (Exception e)
                 {

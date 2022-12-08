@@ -74,6 +74,30 @@ namespace Mattodev.MattoScript.Builder
                                 goto end;
                             }
                             break;
+
+                        // the FLEX module: FiLe EXecutor
+                        case "flex.file.exec":
+                            try
+                            {
+                                oc.Add($"{i};FLEX:EXECFL,{strjoin(ln[1..], " ")}");
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                oc.Add($"{i};INTERNAL:ERR_THROW,TooLittleArgs,{fileName},{i},{ln.Length}");
+                                goto end;
+                            }
+                            break;
+                        case "flex.file.loadVars":
+                            try
+                            {
+                                oc.Add($"{i};FLEX:LOADVARS,{strjoin(ln[1..], " ")}");
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                oc.Add($"{i};INTERNAL:ERR_THROW,TooLittleArgs,{fileName},{i},{ln.Length}");
+                                goto end;
+                            }
+                            break;
                         default:
                             oc.Add($"{i};INTERNAL:ERR_THROW,InvalidCommand,{fileName},{i},{ln[0]}");
                             goto end;
