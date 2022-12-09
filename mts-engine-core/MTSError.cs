@@ -70,7 +70,15 @@ namespace Mattodev.MattoScript.Engine
                 id = "NoVarVal";
             }
         }
-
+        public class UnexpectedKeyword : MTSError
+        {
+            public UnexpectedKeyword()
+            {
+                code = 6;
+                message = "Unexpected keyword: ";
+                id = "UnexpectedKeyword";
+            }
+        }
 
         public class InternalError : MTSError
         {

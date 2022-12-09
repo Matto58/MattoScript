@@ -1,4 +1,5 @@
-﻿using static Mattodev.MattoScript.Engine.CoreEng;
+﻿using Mattodev.MattoScript.Engine;
+using static Mattodev.MattoScript.Engine.CoreEng;
 
 namespace Mattodev.MattoScript.Builder
 {
@@ -9,7 +10,7 @@ namespace Mattodev.MattoScript.Builder
             List<string> oc = new();
             for (int i = 0; i < lns.Length; i++)
             {
-                string l = lns[i].Split("#")[0];
+                string l = lns[i].Replace("\t", "").Split("#")[0];
                 if (!string.IsNullOrWhiteSpace(l))
                 {
                     string[] ln = l.Split(" ");
@@ -91,6 +92,33 @@ namespace Mattodev.MattoScript.Builder
                             try
                             {
                                 oc.Add($"{i};FLEX:LOADVARS,{strjoin(ln[1..], " ")}");
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                oc.Add($"{i};INTERNAL:ERR_THROW,TooLittleArgs,{fileName},{i},{ln.Length}");
+                                goto end;
+                            }
+                            break;
+
+                        // oh boy its time for functions in mattoscript!
+                        case "func.start":
+                            try
+                            {
+                                oc.Add($"{i};FUNC:START,{ln[1]}");
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                oc.Add($"{i};INTERNAL:ERR_THROW,TooLittleArgs,{fileName},{i},{ln.Length}");
+                                goto end;
+                            }
+                            break;
+                        case "func.end":
+                            oc.Add($"{i};FUNC:END");
+                            break;
+                        case "func.call":
+                            try
+                            {
+                                oc.Add($"{i};FUNC:CALL,{ln[1]}");
                             }
                             catch (IndexOutOfRangeException)
                             {

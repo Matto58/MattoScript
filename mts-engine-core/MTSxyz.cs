@@ -17,7 +17,7 @@
         }
         public class MTSInfo
         {
-            public static string engVer = "0.1.1.4";
+            public static string engVer = "0.1.2.5";
             public static string mtsVer = "1";
         }
         public class MTSConsole
@@ -27,22 +27,38 @@
             public int exitCode { get; set; }
             public int stopIndex { get; set; }
             public Dictionary<string, string> vars { get; set; }
+            public Dictionary<string, string[]> funcs { get; set; }
 
             public MTSConsole()
             {
                 cont = "";
                 title = $"MattoScript v{MTSInfo.mtsVer} window (engine version {MTSInfo.engVer})";
                 vars = new();
+                funcs = new();
             }
 
             public void disp() => Console.Write(cont);
-
             public void clr() => cont = "";
+
+            public void copyVars(MTSConsole fromConsole)
+            {
+                foreach (var v in fromConsole.vars)
+                    if (!vars.ContainsKey(v.Key))
+                        vars[v.Key] = v.Value;
+            }
+            public void copyFuncs(MTSConsole fromConsole)
+            {
+                foreach (var f in fromConsole.funcs)
+                    if (!funcs.ContainsKey(f.Key))
+                        funcs[f.Key] = f.Value;
+            }
 
             public static MTSConsole operator +(MTSConsole a, MTSConsole b)
             {
                 MTSConsole c = a;
                 c.cont = a.cont + b.cont;
+                c.copyVars(b);
+                c.copyFuncs(b);
                 return c;
             }
             public static MTSConsole operator *(MTSConsole a, int b)
@@ -56,12 +72,6 @@
                 }
                 for (int i = 1; i < b; i++) c.cont += a.cont;
                 return c;
-            }
-            public void copyVars(MTSConsole otherConsole)
-            {
-                foreach (var v in otherConsole.vars)
-                    if (!vars.ContainsKey(v.Value))
-                        vars[v.Key] = v.Value;
             }
         }
         public class MTSVar

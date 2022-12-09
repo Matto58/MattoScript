@@ -75,7 +75,7 @@ namespace Mattodev.MattoScript.Shell
                         case "execfi":
                             try
                             {
-                                con = Runner.runFromInterLang(File.ReadAllText(ln[1]));
+                                con = Runner.runFromInterLang(File.ReadAllText(ln[1]), ln[1]);
                             }
                             catch (IndexOutOfRangeException)
                             {
