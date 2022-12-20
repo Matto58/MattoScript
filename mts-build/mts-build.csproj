@@ -6,6 +6,7 @@
     <RootNamespace>Mattodev.MattoScript.Builder</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Title>MattoScript builder</Title>
   </PropertyGroup>
 
   <ItemGroup>

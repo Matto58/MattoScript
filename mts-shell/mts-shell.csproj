@@ -6,6 +6,7 @@
     <RootNamespace>Mattodev.MattoScript.Shell</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Title>MattoScript shell</Title>
   </PropertyGroup>
 
   <ItemGroup>

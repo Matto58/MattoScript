@@ -17,7 +17,7 @@
         }
         public class MTSInfo
         {
-            public static string engVer = "0.1.2.5";
+            public static string engVer = "0.2.0.6";
             public static string mtsVer = "1";
         }
         public class MTSConsole
@@ -27,6 +27,7 @@
             public int exitCode { get; set; }
             public int stopIndex { get; set; }
             public Dictionary<string, string> vars { get; set; }
+            public Dictionary<string, Int128> intVars { get; set; }
             public Dictionary<string, string[]> funcs { get; set; }
 
             public MTSConsole()
@@ -34,8 +35,11 @@
                 cont = "";
                 title = $"MattoScript v{MTSInfo.mtsVer} window (engine version {MTSInfo.engVer})";
                 vars = new();
+                intVars = new();
                 funcs = new();
             }
+
+            public override string ToString() => cont;
 
             public void disp() => Console.Write(cont);
             public void clr() => cont = "";
@@ -43,8 +47,10 @@
             public void copyVars(MTSConsole fromConsole)
             {
                 foreach (var v in fromConsole.vars)
-                    if (!vars.ContainsKey(v.Key))
-                        vars[v.Key] = v.Value;
+                    vars[v.Key] = v.Value;
+
+                foreach (var v in fromConsole.intVars)
+                    intVars[v.Key] = v.Value;
             }
             public void copyFuncs(MTSConsole fromConsole)
             {
@@ -73,6 +79,7 @@
                 for (int i = 1; i < b; i++) c.cont += a.cont;
                 return c;
             }
+            public static explicit operator string(MTSConsole c) => c.ToString();
         }
         public class MTSVar
         {
@@ -91,6 +98,16 @@
                 foreach (MTSVar v in vars) if (v.varName == varName) return v.varValue;
                 return "";
             }
+        }
+        public abstract class MTSFunc
+        {
+            public string interName = "";
+            public abstract string ToInterlang(int i, string[] args);
+            public abstract void Exec(ref MTSConsole con);
+
+            // recommended to use to generate an interlang name (a name used in the interlang)
+            public static string GenInterName(string funcName)
+                => funcName.Replace(".", ":").ToUpper();
         }
     }
 }

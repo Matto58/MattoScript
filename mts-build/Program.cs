@@ -9,6 +9,7 @@ namespace Mattodev.MattoScript.Builder
         {
             MTSConsole c = new();
             Console.Title = c.title;
+
             if (args.Length == 0)
             {
                 MTSError.TooLittleArgs err = new();

@@ -2,12 +2,15 @@
 using Mattodev.MattoScript.Engine;
 using Mattodev.MattoScript.Builder;
 
+using System.Diagnostics;
+
 namespace Mattodev.MattoScript.Shell
 {
     internal class Program
     {
         static int Main(string[] args)
         {
+            bool debug = false;
             Console.WriteLine($"MattoScript v{MTSInfo.mtsVer} (engine version {MTSInfo.engVer}) - shell");
             while (true)
             {
@@ -19,8 +22,12 @@ namespace Mattodev.MattoScript.Shell
 
                     MTSError err;
                     MTSConsole con = new();
+                    Stopwatch s = new();
                     switch (ln[0].ToLower())
                     {
+                        case "debug":
+                            debug = !debug;
+                            break;
                         case "exit": goto end;
                         case "tointerf":
                             try
@@ -56,7 +63,9 @@ namespace Mattodev.MattoScript.Shell
                         case "execf":
                             try
                             {
+                                s.Start();
                                 con = Runner.runFromCode(File.ReadAllText(ln[1]), ln[1]);
+                                s.Stop();
                             }
                             catch (IndexOutOfRangeException)
                             {
@@ -75,7 +84,7 @@ namespace Mattodev.MattoScript.Shell
                         case "execfi":
                             try
                             {
-                                con = Runner.runFromInterLang(File.ReadAllText(ln[1]), ln[1]);
+                                con = Runner.runFromInterLang(File.ReadAllText(ln[1]), ln[1], Runner.otherVars, Runner.otherIntVars);
                             }
                             catch (IndexOutOfRangeException)
                             {
@@ -112,6 +121,7 @@ namespace Mattodev.MattoScript.Shell
                     }
                     con.cont += "\n";
                     con.disp();
+                    if (debug) Console.WriteLine($"\n(took {s.Elapsed.TotalMilliseconds}ms)");
                 }
             }
             end: return 0;

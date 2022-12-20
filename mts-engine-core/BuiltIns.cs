@@ -4,7 +4,7 @@
     {
         public class BuiltIns
         {
-            public class Console
+            public class Consol3
             {
                 public static void conOut(ref MTSConsole console, string txt = "", bool newLn = false)
                 {

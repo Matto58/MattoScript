@@ -79,6 +79,24 @@ namespace Mattodev.MattoScript.Engine
                 id = "UnexpectedKeyword";
             }
         }
+        public class InvalidInt : MTSError
+        {
+            public InvalidInt()
+            {
+                code = 7;
+                message = "This is not a valid 128-bit signed integer: ";
+                id = "InvalidInt";
+            }
+        }
+        public class InvalidArg : MTSError
+        {
+            public InvalidArg()
+            {
+                code = 8;
+                message = "This is not a valid argument: ";
+                id = "InvalidArg";
+            }
+        }
 
         public class InternalError : MTSError
         {
