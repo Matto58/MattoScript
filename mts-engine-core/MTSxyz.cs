@@ -17,7 +17,7 @@
         }
         public class MTSInfo
         {
-            public static string engVer = "0.2.0.6";
+            public static string engVer = "0.2.0.7";
             public static string mtsVer = "1";
         }
         public class MTSConsole
@@ -102,12 +102,31 @@
         public abstract class MTSFunc
         {
             public string interName = "";
-            public abstract string ToInterlang(int i, string[] args);
-            public abstract void Exec(ref MTSConsole con);
+            public abstract string ToInterlang(int i, string[] args, string fileName);
+            public abstract void Exec(ref MTSConsole con, string[] args, string fileName, ref bool exit);
+
+            public MTSFunc(string funcName)
+            {
+                interName = GenInterName(funcName);
+            }
 
             // recommended to use to generate an interlang name (a name used in the interlang)
             public static string GenInterName(string funcName)
                 => funcName.Replace(".", ":").ToUpper();
-        }
+
+            public static MTSError GetErrFromName(string name)
+                => name switch
+                {
+                    "InvalidCommand" => new MTSError.InvalidCommand(),
+                    "TooLittleArgs" => new MTSError.TooLittleArgs(),
+                    "FileNotFound" => new MTSError.FileNotFound(),
+                    "UnassignedVar" => new MTSError.UnassignedVar(),
+                    "NoVarVal" => new MTSError.NoVarVal(),
+                    "UnexpectedKeyword" => new MTSError.UnexpectedKeyword(),
+                    "InvalidInt" => new MTSError.InvalidInt(),
+                    "InvalidArg" => new MTSError.InvalidArg(),
+                    _ => new()
+                };
+        };
     }
 }

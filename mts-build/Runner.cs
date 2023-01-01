@@ -1,6 +1,7 @@
 ﻿using Mattodev.MattoScript.Engine;
 using static Mattodev.MattoScript.Engine.CoreEng;
 using static Mattodev.MattoScript.Engine.CoreEng.BuiltIns;
+using static Mattodev.MattoScript.Engine.CoreEng.MTSFuncs;
 
 namespace Mattodev.MattoScript.Builder
 {
@@ -9,6 +10,13 @@ namespace Mattodev.MattoScript.Builder
         public static Dictionary<string, MTSFunc> otherFuncs = new();
         public static Dictionary<string, string> otherVars = new();
         public static Dictionary<string, Int128> otherIntVars = new();
+
+        internal static Dictionary<string, MTSFunc> mainFuncs = new()
+        {
+            { "fima.read", new FiMa.Read() },
+            { "fima.write", new FiMa.Write() }
+        };
+
         public static bool exit = false;
 
         public static MTSConsole runFromInterLang(string[] interLangLns, string fileName, Dictionary<string, string> variables, Dictionary<string, Int128> intVariables)
@@ -17,7 +25,8 @@ namespace Mattodev.MattoScript.Builder
             Dictionary<string, string> vars = new()
             {
                 { "$ver.engine", MTSInfo.engVer },
-                { "$ver.mtscript", MTSInfo.mtsVer }
+                { "$ver.mtscript", MTSInfo.mtsVer },
+                { "$con.title", c.title }
             };
             Dictionary<string, Int128> intVars = new();
             Dictionary<string, string[]> funcs = new();
@@ -28,12 +37,17 @@ namespace Mattodev.MattoScript.Builder
 
             c.vars = vars;
             c.intVars = intVars;
+
             varC.vars = variables;
             varC.intVars = intVariables;
+
             c.copyVars(varC);
+
             vars = c.vars;
             intVars = c.intVars;
+
             int inx = 0;
+
             foreach (string l in interLangLns)
             {
                 string[] i = l.Split(";");
@@ -52,7 +66,11 @@ namespace Mattodev.MattoScript.Builder
                         // might work? (ev0.2.0.6)
                         foreach (var f in otherFuncs)
                             if (f.Value.interName == ln[0])
-                                f.Value.Exec(ref c);
+                                f.Value.Exec(ref c, ln, fileName, ref exit);
+
+                        foreach (var f in mainFuncs)
+                            if (f.Value.interName == ln[0])
+                                f.Value.Exec(ref c, ln, fileName, ref exit);
 
                         switch (ln[0])
                         {
@@ -62,7 +80,7 @@ namespace Mattodev.MattoScript.Builder
                                 Int128 vVal2 = intVars.GetValueOrDefault(ln[2], 0);
                                 if (
                                     ((vVal == "INTERNAL:NOVAL" || vVal == "") && ln[2][0] == '$')
-                                    || (vVal2 == 0 && ln[2][0] == '%')
+                                    || (vVal2 == Int128.Zero && ln[2][0] == '%')
                                 )
                                 {
                                     err = new MTSError.UnassignedVar();
@@ -85,17 +103,7 @@ namespace Mattodev.MattoScript.Builder
                                     vars[ln[1]] = inp;
                                 break;
                             case "INTERNAL:ERR_THROW":
-                                err = ln[1] switch
-                                {
-                                    "InvalidCommand" => new MTSError.InvalidCommand(),
-                                    "TooLittleArgs" => new MTSError.TooLittleArgs(),
-                                    "FileNotFound" => new MTSError.FileNotFound(),
-                                    "UnassignedVar" => new MTSError.UnassignedVar(),
-                                    "NoVarVal" => new MTSError.NoVarVal(),
-                                    "UnexpectedKeyword" => new MTSError.UnexpectedKeyword(),
-                                    "InvalidInt" => new MTSError.InvalidInt(),
-                                    _ => new()
-                                };
+                                err = MTSFunc.GetErrFromName(ln[1]);
                                 err.message += ln[4];
                                 c.exitCode = err.ThrowErr(ln[2], int.Parse(ln[3]), ref c);
                                 exit = true;
@@ -243,7 +251,10 @@ namespace Mattodev.MattoScript.Builder
                             func = new();
                         }
                     }
+
                     inx++;
+                    c.title = vars["$con.title"];
+                    Console.Title = c.title;
                 }
                 catch (Exception e)
                 {

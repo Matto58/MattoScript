@@ -11,18 +11,21 @@ namespace Mattodev.MattoScript.Shell
         static int Main(string[] args)
         {
             bool debug = false;
+            MTSConsole con = new();
             Console.WriteLine($"MattoScript v{MTSInfo.mtsVer} (engine version {MTSInfo.engVer}) - shell");
             while (true)
             {
+                Console.Title = con.title;
                 Console.Write(">");
                 string? i = Console.ReadLine();
                 if (!string.IsNullOrWhiteSpace(i))
                 {
                     string[] ln = i.Split(" ");
 
+                    con = new();
                     MTSError err;
-                    MTSConsole con = new();
                     Stopwatch s = new();
+                    s.Start();
                     switch (ln[0].ToLower())
                     {
                         case "debug":
@@ -63,9 +66,7 @@ namespace Mattodev.MattoScript.Shell
                         case "execf":
                             try
                             {
-                                s.Start();
                                 con = Runner.runFromCode(File.ReadAllText(ln[1]), ln[1]);
-                                s.Stop();
                             }
                             catch (IndexOutOfRangeException)
                             {
@@ -100,6 +101,20 @@ namespace Mattodev.MattoScript.Shell
                                 err.ThrowErr("<shell>", -1, ref con);
                             }
                             break;
+                        case "execln":
+                            try
+                            {
+                                Console.WriteLine(String.Join(' ', ln[1..]));
+                                con = Runner.runFromInterLang(String.Join(' ', ln[1..]), "<shell>", Runner.otherVars, Runner.otherIntVars);
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                err = new MTSError.TooLittleArgs();
+                                err.message += $"{ln.Length - 1}";
+                                try { err.ThrowErr("<shell>", con.stopIndex, ref con); } // the toolittleargs error is the mts file's fault - too little args in code
+                                catch { err.ThrowErr("<shell>", -1, ref con); } // the toolittleargs error is the shell's fault - too little args in shell input
+                            }
+                            break;
                         case "tointerf_save":
                             try
                             {
@@ -119,9 +134,10 @@ namespace Mattodev.MattoScript.Shell
                             err.ThrowErr("<shell>", -1, ref con);
                             break;
                     }
+                    s.Stop();
                     con.cont += "\n";
                     con.disp();
-                    if (debug) Console.WriteLine($"\n(took {s.Elapsed.TotalMilliseconds}ms)");
+                    if (debug) Console.WriteLine($"(took {Math.Round(s.Elapsed.TotalMilliseconds, 1)}ms)");
                 }
             }
             end: return 0;
