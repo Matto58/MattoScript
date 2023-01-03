@@ -12,4 +12,4 @@ Scripting programming language
 
 | Version | Engine version | Engine revision | .NET version | Release date (supported) | Supported until |
 |:-:|:-:|:-:|:-:|:-:|:-:|
-| v1 | v0.2.0 | 6 | 7.0 | 2022-12-20 (yes) | 2023-02-20 |
+| v1 | v0.2.0 | 7 | 7.0 | 2022-01-03 (yes) | 2023-02-20 |

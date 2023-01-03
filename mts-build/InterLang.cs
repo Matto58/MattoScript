@@ -1,5 +1,4 @@
-﻿using Mattodev.MattoScript.Engine;
-using static Mattodev.MattoScript.Engine.CoreEng;
+﻿using static Mattodev.MattoScript.Engine.CoreEng;
 
 namespace Mattodev.MattoScript.Builder
 {
@@ -9,6 +8,7 @@ namespace Mattodev.MattoScript.Builder
         {
             List<string> oc = new();
             Dictionary<string, MTSFunc> otherFuncs = Runner.otherFuncs;
+            Dictionary<string, MTSFunc> mainFuncs  = Runner.mainFuncs;
             for (int i = 0; i < lns.Length; i++)
             {
                 string l = lns[i].Replace("\t", "").Split("#")[0];
@@ -18,10 +18,21 @@ namespace Mattodev.MattoScript.Builder
                     //Console.WriteLine("'" + ln[0] + "'");
 
                     // might work? (ev0.2.0.6)
+                    // update: no, but it should now (ev0.2.0.7)
                     foreach (var f in otherFuncs)
                         if (f.Key == ln[0])
-                            oc.Add(f.Value.ToInterlang(i, ln));
-                    
+                        {
+                            oc.Add(f.Value.ToInterlang(i, ln, fileName));
+                            continue;
+                        }
+
+                    foreach (var f in mainFuncs)
+                        if (f.Key == ln[0])
+                        {
+                            oc.Add(f.Value.ToInterlang(i, ln, fileName));
+                            continue;
+                        }
+
                     switch (ln[0])
                     {
                         case "con.out":

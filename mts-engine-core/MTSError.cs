@@ -25,6 +25,9 @@ namespace Mattodev.MattoScript.Engine
             return code;
         }
 
+        public override string ToString()
+            => id;
+
         public class InvalidCommand : MTSError
         {
             public InvalidCommand()
