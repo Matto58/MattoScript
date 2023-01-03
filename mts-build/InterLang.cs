@@ -18,13 +18,20 @@ namespace Mattodev.MattoScript.Builder
                     //Console.WriteLine("'" + ln[0] + "'");
 
                     // might work? (ev0.2.0.6)
+                    // update: no, but it should now (ev0.2.0.7)
                     foreach (var f in otherFuncs)
                         if (f.Key == ln[0])
+                        {
                             oc.Add(f.Value.ToInterlang(i, ln, fileName));
+                            continue;
+                        }
 
                     foreach (var f in mainFuncs)
                         if (f.Key == ln[0])
+                        {
                             oc.Add(f.Value.ToInterlang(i, ln, fileName));
+                            continue;
+                        }
 
                     switch (ln[0])
                     {
