@@ -19,6 +19,31 @@ namespace Mattodev.MattoScript.Builder
 
 		public static bool exit = false;
 
+		public static string CheckStrForVar(string str, ref MTSConsole c, Dictionary<string, string> vars, Dictionary<string, Int128> intVars)
+		{
+			string vVal = vars.GetValueOrDefault(str, "INTERNAL:NOVAL");
+			Int128 vVal2 = intVars.GetValueOrDefault(str, 0);
+			int vValLen = vars.GetValueOrDefault("$" + str[1..], "").Length;
+			if (
+				((vVal == "INTERNAL:NOVAL" || vVal == "")
+				&& str[0] == '$' && str[0] != '@')
+				|| (vVal2 == Int128.Zero && str[0] == '%')
+				|| (vValLen == Int128.Zero && str[0] == '@')
+			)
+			{
+				MTSError err = new MTSError.UnassignedVar();
+				err.message += str;
+				err.ThrowErr("<thisfile>", c.stopIndex, ref c);
+				exit = true;
+				return "";
+			}
+			return
+				str[0] == '$' ? vVal :
+				str[0] == '%' ? vVal2.ToString() :
+				str[0] == '@' ? vValLen.ToString() :
+				str.Replace("\\", "");
+		}
+
 		public static MTSConsole runFromInterLang(string[] interLangLns, string fileName, Dictionary<string, string> variables, Dictionary<string, Int128> intVariables)
 		{
 			MTSConsole c = new(), varC = new();
@@ -60,6 +85,7 @@ namespace Mattodev.MattoScript.Builder
 				//Console.WriteLine(l);
 				MTSError err;
 				MTSConsole flexC, funcC, loopC;
+				string fn;
 
 				if (exit) goto end;
 
@@ -87,7 +113,7 @@ namespace Mattodev.MattoScript.Builder
 						{
 							case "CON:OUT":
 								//Console.WriteLine("\t" + intVars[ln[2]]);
-								string vVal = vars.GetValueOrDefault(ln[2], "INTERNAL:NOVAL");
+								/*string vVal = vars.GetValueOrDefault(ln[2], "INTERNAL:NOVAL");
 								Int128 vVal2 = intVars.GetValueOrDefault(ln[2], 0);
 								int vValLen = vars.GetValueOrDefault("$" + ln[2][1..], "").Length;
 								if (
@@ -106,8 +132,11 @@ namespace Mattodev.MattoScript.Builder
 									ln[2][0] == '%' ? vVal2.ToString() :
 									ln[2][0] == '@' ? vValLen.ToString() :
 									ln[2].Replace("\\", ""), ln[1] == "1"
-								);
+								);*/
 								//Console.WriteLine(c.cont);
+
+								// revamped printing! (ev0.2.1.9)
+								Consol3.conOut(ref c, CheckStrForVar(ln[2], ref c, vars, intVars), ln[1] != "1");
 								break;
 							case "CON:INPUT":
 								c.disp();
@@ -127,48 +156,51 @@ namespace Mattodev.MattoScript.Builder
 								break;
 							case "SETVAR":
 								string[] eq = ln[1].Split("=");
-								vars[eq[0]] = eq[1];
+								vars[eq[0]] = CheckStrForVar(eq[1], ref c, vars, intVars);
 								break;
 
 							// the FLEX module: FiLe EXecutor
 							case "FLEX:EXECFL":
+								fn = CheckStrForVar(ln[1], ref c, vars, intVars);
 								try
 								{
-									flexC = runFromCode(File.ReadAllLines(ln[1]), ln[1]);
+									flexC = runFromCode(File.ReadAllLines(fn), fn);
 									c += flexC;
 								}
 								catch (FileNotFoundException)
 								{
 									err = new MTSError.FileNotFound();
-									err.message += ln[1];
+									err.message += fn;
 									err.ThrowErr(fileName, c.stopIndex, ref c);
 									exit = true;
 								}
 								break;
 							case "FLEX:LOADVARS":
+								fn = CheckStrForVar(ln[1], ref c, vars, intVars);
 								try
 								{
-									flexC = runFromCode(File.ReadAllLines(ln[1]), ln[1]);
+									flexC = runFromCode(File.ReadAllLines(fn), fn);
 									c.copyVars(flexC);
 								}
 								catch (FileNotFoundException)
 								{
 									err = new MTSError.FileNotFound();
-									err.message += ln[1];
+									err.message += fn;
 									err.ThrowErr(fileName, c.stopIndex, ref c);
 									exit = true;
 								}
 								break;
 							case "FLEX:LOADFUNCS":
+								fn = CheckStrForVar(ln[1], ref c, vars, intVars);
 								try
 								{
-									flexC = runFromCode(File.ReadAllLines(ln[1]), ln[1]);
+									flexC = runFromCode(File.ReadAllLines(fn), fn);
 									c.copyFuncs(flexC);
 								}
 								catch (FileNotFoundException)
 								{
 									err = new MTSError.FileNotFound();
-									err.message += ln[1];
+									err.message += fn;
 									err.ThrowErr(fileName, c.stopIndex, ref c);
 									exit = true;
 								}
@@ -199,7 +231,8 @@ namespace Mattodev.MattoScript.Builder
 							// its integering time
 							case "INTEGER:SETVAR":
 								string[] eqv = ln[1].Split("=");
-								intVars[eqv[0]] = Int128.Parse(eqv[1]);
+								fn = CheckStrForVar(eqv[1], ref c, vars, intVars);
+								intVars[eqv[0]] = Int128.Parse(fn);
 								break;
 							case "INTEGER:CALC":
 								foreach (string val in ln[3..])

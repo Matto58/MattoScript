@@ -146,7 +146,7 @@ namespace Mattodev.MattoScript.Builder
 						case "func.end":
 							oc.Add($"{i};FUNC:END");
 							break;
-						case "func.call":
+						case "func.call" or "call":
 							try
 							{
 								oc.Add($"{i};FUNC:CALL,{ln[1]}");
