@@ -158,7 +158,7 @@ namespace Mattodev.MattoScript.Builder
 							}
 							break;
 
-						case "for":
+						case "for" or "loop.for":
 							try
 							{
 								oc.Add($"{i};LOOP:FOR,{ln[1]},{ln[2]}");
