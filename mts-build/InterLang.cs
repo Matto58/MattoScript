@@ -199,7 +199,7 @@ namespace Mattodev.MattoScript.Builder
 								goto end;
 							}
 							break;
-						case "calc":
+						case "calc" or "int.calc":
 							try
 							{
 								// lineNum;INTEGER:CALC,varName,mathSymbol,[numbers,...]
