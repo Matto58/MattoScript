@@ -146,7 +146,7 @@ namespace Mattodev.MattoScript.Builder
 						case "func.end":
 							oc.Add($"{i};FUNC:END");
 							break;
-						case "func.call":
+						case "func.call" or "call":
 							try
 							{
 								oc.Add($"{i};FUNC:CALL,{ln[1]}");
@@ -158,7 +158,7 @@ namespace Mattodev.MattoScript.Builder
 							}
 							break;
 
-						case "for":
+						case "for" or "loop.for":
 							try
 							{
 								oc.Add($"{i};LOOP:FOR,{ln[1]},{ln[2]}");
@@ -199,7 +199,7 @@ namespace Mattodev.MattoScript.Builder
 								goto end;
 							}
 							break;
-						case "calc":
+						case "calc" or "int.calc":
 							try
 							{
 								// lineNum;INTEGER:CALC,varName,mathSymbol,[numbers,...]
