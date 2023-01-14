@@ -27,7 +27,7 @@ namespace Mattodev.MattoScript.Builder
             {
                 MTSError.FileNotFound err = new();
                 err.message += args[0];
-                err.ThrowErr("mts-build.dll", -1, ref c);
+                err.ThrowErr("<build>", -1, ref c);
                 c.exitCode = err.code;
                 goto end;
             }
@@ -35,7 +35,7 @@ namespace Mattodev.MattoScript.Builder
             {
                 MTSError.InternalError err = new(e);
                 err.message += $"\n\t{e.Message}";
-                err.ThrowErr("mts-build.dll", -1, ref c);
+                err.ThrowErr("<build>", -1, ref c);
                 c.exitCode = err.code;
                 goto end;
             }
