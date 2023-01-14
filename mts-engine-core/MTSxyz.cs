@@ -17,7 +17,7 @@
         }
         public class MTSInfo
         {
-            public static string engVer = "0.2.0.7";
+            public static string engVer = "0.2.1.8";
             public static string mtsVer = "1";
         }
         public class MTSConsole

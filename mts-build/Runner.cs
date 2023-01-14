@@ -64,13 +64,20 @@ namespace Mattodev.MattoScript.Builder
                     if (!inFunc)
                     {
                         // might work? (ev0.2.0.6)
+                        // update: kinda but similar issue to previous version (ev0.2.1.8)
                         foreach (var f in otherFuncs)
                             if (f.Value.interName == ln[0])
+                            {
                                 f.Value.Exec(ref c, ln, fileName, ref exit);
+                                continue;
+                            }
 
                         foreach (var f in mainFuncs)
                             if (f.Value.interName == ln[0])
+                            {
                                 f.Value.Exec(ref c, ln, fileName, ref exit);
+                                continue;
+                            }
 
                         switch (ln[0])
                         {
@@ -78,9 +85,11 @@ namespace Mattodev.MattoScript.Builder
                                 //Console.WriteLine("\t" + intVars[ln[2]]);
                                 string vVal = vars.GetValueOrDefault(ln[2], "INTERNAL:NOVAL");
                                 Int128 vVal2 = intVars.GetValueOrDefault(ln[2], 0);
+                                int vValLen = vars.GetValueOrDefault("$" + ln[2][1..], "").Length;
                                 if (
-                                    ((vVal == "INTERNAL:NOVAL" || vVal == "") && ln[2][0] == '$')
-                                    || (vVal2 == Int128.Zero && ln[2][0] == '%')
+                                    ((vVal == "INTERNAL:NOVAL" || vVal == "") && ln[2][0] == '$' && ln[2][0] != '@')
+									|| (vVal2 == Int128.Zero && ln[2][0] == '%')
+									|| (vValLen == Int128.Zero && ln[2][0] == '@')
                                 )
                                 {
                                     err = new MTSError.UnassignedVar();
@@ -91,7 +100,8 @@ namespace Mattodev.MattoScript.Builder
                                 else Consol3.conOut(ref c,
                                     ln[2][0] == '$' ? vVal :
                                     ln[2][0] == '%' ? vVal2.ToString() :
-                                    ln[2], ln[1] == "1"
+                                    ln[2][0] == '@' ? vValLen.ToString() :
+                                    ln[2].Replace("\\", ""), ln[1] == "1"
                                 );
                                 //Console.WriteLine(c.cont);
                                 break;
