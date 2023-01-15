@@ -320,19 +320,21 @@ namespace Mattodev.MattoScript.Builder
 							case "COND:IF":
 								if (ProcessStatement(ln[1..], fileName, inx, ref c, vars, intVars))
 								{
-									fn = CheckStrForVar(ln[4], ref c, vars, intVars);
-									try
+									string[] cd2 = funcs[ln[4]];
+									// Console.WriteLine(strjoin(cd1, "\n") + "\n" + ln[1]);
+									if (cd2[0] == "INTERNAL:NOFUNC" || cd2[0] == "")
 									{
-										flexC = runFromCode(File.ReadAllLines(fn), fn);
-										c += flexC;
-									}
-									catch (FileNotFoundException)
-									{
-										err = new MTSError.FileNotFound();
-										err.message += fn;
+										err = new MTSError.UnassignedVar();
+										err.message += $"<function {ln[4]}>";
 										err.ThrowErr(fileName, c.stopIndex, ref c);
 										exit = true;
 									}
+									else
+									{
+										funcC = runFromInterLang(cd2, $"{fileName}:<function {ln[4]}>", c.vars, c.intVars);
+										c += funcC;
+									}
+									break;
 								}
 								break;
 						}
