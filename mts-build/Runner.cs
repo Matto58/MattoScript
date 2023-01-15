@@ -18,7 +18,7 @@ namespace Mattodev.MattoScript.Builder
 		};
 
 		public static bool exit = false;
-
+		
 		public static string CheckStrForVar(string str, ref MTSConsole c, Dictionary<string, string> vars, Dictionary<string, Int128> intVars)
 		{
 			string vVal = vars.GetValueOrDefault(str, "INTERNAL:NOVAL");
@@ -42,6 +42,41 @@ namespace Mattodev.MattoScript.Builder
 				str[0] == '%' ? vVal2.ToString() :
 				str[0] == '@' ? vValLen.ToString() :
 				str.Replace("\\", "");
+		}
+
+		public static bool ProcessStatement(string[] strings, string filename, int i, ref MTSConsole c, Dictionary<string, string> vars, Dictionary<string, Int128> intVars)
+		{
+			string l = CheckStrForVar(strings[0], ref c, vars, intVars);
+			string s = strings[1];
+			string r = CheckStrForVar(strings[2], ref c, vars, intVars);
+
+			string[] vs =
+			{
+				"eq", "neq",
+				"lt", "lte",
+				"gt", "gte"
+			};
+
+			if (!vs.Contains(s))
+			{
+				MTSError err = new MTSError.InvalidArg();
+				err.message += s;
+				err.ThrowErr(filename, i, ref c);
+				c.exitCode = err.code;
+				exit = true;
+				return false;
+			}
+
+			return s.ToLower() switch
+			{
+				"eq" => l == r,
+				"neq" => l != r,
+				"lt" => Int128.Parse(l) < Int128.Parse(r),
+				"gt" => Int128.Parse(l) > Int128.Parse(r),
+				"lte" => Int128.Parse(l) >= Int128.Parse(r),
+				"gte" => Int128.Parse(l) <= Int128.Parse(r),
+				_ => false
+			};
 		}
 
 		public static MTSConsole runFromInterLang(string[] interLangLns, string fileName, Dictionary<string, string> variables, Dictionary<string, Int128> intVariables)
@@ -280,6 +315,24 @@ namespace Mattodev.MattoScript.Builder
 									//Console.WriteLine(finp[0] + "\t" + loopVars[finp[0]]);
 									loopC = runFromInterLang(funcs[ln[2]], $"{fileName}:<forloop>:<function {ln[2]}>", vars, loopVars);
 									c += loopC;
+								}
+								break;
+							case "COND:IF":
+								if (ProcessStatement(ln[1..], fileName, inx, ref c, vars, intVars))
+								{
+									fn = CheckStrForVar(ln[4], ref c, vars, intVars);
+									try
+									{
+										flexC = runFromCode(File.ReadAllLines(fn), fn);
+										c += flexC;
+									}
+									catch (FileNotFoundException)
+									{
+										err = new MTSError.FileNotFound();
+										err.message += fn;
+										err.ThrowErr(fileName, c.stopIndex, ref c);
+										exit = true;
+									}
 								}
 								break;
 						}
