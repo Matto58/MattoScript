@@ -79,6 +79,31 @@ namespace Mattodev.MattoScript.Builder
 			};
 		}
 
+		public static string CheckStrForVar(string str, ref MTSConsole c, Dictionary<string, string> vars, Dictionary<string, Int128> intVars)
+		{
+			string vVal = vars.GetValueOrDefault(str, "INTERNAL:NOVAL");
+			Int128 vVal2 = intVars.GetValueOrDefault(str, 0);
+			int vValLen = vars.GetValueOrDefault("$" + str[1..], "").Length;
+			if (
+				((vVal == "INTERNAL:NOVAL" || vVal == "")
+				&& str[0] == '$' && str[0] != '@')
+				|| (vVal2 == Int128.Zero && str[0] == '%')
+				|| (vValLen == Int128.Zero && str[0] == '@')
+			)
+			{
+				MTSError err = new MTSError.UnassignedVar();
+				err.message += str;
+				err.ThrowErr("<thisfile>", c.stopIndex, ref c);
+				exit = true;
+				return "";
+			}
+			return
+				str[0] == '$' ? vVal :
+				str[0] == '%' ? vVal2.ToString() :
+				str[0] == '@' ? vValLen.ToString() :
+				str.Replace("\\", "");
+		}
+
 		public static MTSConsole runFromInterLang(string[] interLangLns, string fileName, Dictionary<string, string> variables, Dictionary<string, Int128> intVariables)
 		{
 			MTSConsole c = new(), varC = new();

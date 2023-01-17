@@ -2,6 +2,7 @@
 Scripting programming language
 
 ## Links
+- [New docs](https://matto58.rf.gd/mtsdocs)
 - [Legacy docs](https://github.com/Matto58/MattoScript/wiki/Documentation)
 - [Discord](https://discord.gg/2R2aC5NTd7)
 - [Trello board](https://trello.com/b/nGJyW8r9/mattoscript)
