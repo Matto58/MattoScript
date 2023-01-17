@@ -169,6 +169,17 @@ namespace Mattodev.MattoScript.Builder
 								goto end;
 							}
 							break;
+						case "if" or "cond.if":
+							try
+							{
+								oc.Add($"{i};COND:IF,{ln[1]},{ln[2]},{ln[3]},{ln[4]}");
+							}
+							catch (IndexOutOfRangeException)
+							{
+								oc.Add($"{i};INTERNAL:ERR_THROW,TooLittleArgs,{fileName},{i},{ln.Length}");
+								goto end;
+							}
+							break;
 
 						// you know what mattoscript really needs? INTEGERS (ev0.2.0.6)
 						case "int.var":
