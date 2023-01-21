@@ -11,6 +11,8 @@ namespace Mattodev.MattoScript.Builder
 		public static Dictionary<string, string> otherVars = new();
 		public static Dictionary<string, Int128> otherIntVars = new();
 
+		public static int loops = 0;
+
 		internal static Dictionary<string, MTSFunc> mainFuncs = new()
 		{
 			{ "fima.read", new FiMa.Read() },
@@ -46,41 +48,46 @@ namespace Mattodev.MattoScript.Builder
 
 		public static bool ProcessStatement(string[] strings, string filename, int i, ref MTSConsole c, Dictionary<string, string> vars, Dictionary<string, Int128> intVars)
 		{
-			string l = CheckStrForVar(strings[0], ref c, vars, intVars);
-			string s = strings[1];
-			string r = CheckStrForVar(strings[2], ref c, vars, intVars);
-
-			string[] vs =
+			if (loops < 1000000000)
 			{
-				"eq", "neq",
-				"lt", "lte",
-				"gt", "gte"
-			};
+				string l = CheckStrForVar(strings[0], ref c, vars, intVars);
+				string s = strings[1];
+				string r = CheckStrForVar(strings[2], ref c, vars, intVars);
 
-			if (!vs.Contains(s))
-			{
-				MTSError err = new MTSError.InvalidArg();
-				err.message += s;
-				err.ThrowErr(filename, i, ref c);
-				c.exitCode = err.code;
-				exit = true;
-				return false;
+				string[] vs =
+				{
+					"eq", "neq",
+					"lt", "lte",
+					"gt", "gte"
+				};
+
+				if (!vs.Contains(s))
+				{
+					MTSError err = new MTSError.InvalidArg();
+					err.message += s;
+					err.ThrowErr(filename, i, ref c);
+					c.exitCode = err.code;
+					exit = true;
+					return false;
+				}
+
+				return s.ToLower() switch
+				{
+					"eq" => l == r,
+					"neq" => l != r,
+					"lt" => Int128.Parse(l) < Int128.Parse(r),
+					"gt" => Int128.Parse(l) > Int128.Parse(r),
+					"lte" => Int128.Parse(l) >= Int128.Parse(r),
+					"gte" => Int128.Parse(l) <= Int128.Parse(r),
+					_ => false
+				};
 			}
-
-			return s.ToLower() switch
-			{
-				"eq" => l == r,
-				"neq" => l != r,
-				"lt" => Int128.Parse(l) < Int128.Parse(r),
-				"gt" => Int128.Parse(l) > Int128.Parse(r),
-				"lte" => Int128.Parse(l) >= Int128.Parse(r),
-				"gte" => Int128.Parse(l) <= Int128.Parse(r),
-				_ => false
-			};
+			return false;
 		}
 
 		public static MTSConsole runFromInterLang(string[] interLangLns, string fileName, Dictionary<string, string> variables, Dictionary<string, Int128> intVariables)
 		{
+			#region vars
 			MTSConsole c = new(), varC = new();
 			Dictionary<string, string> vars = new()
 			{
@@ -111,6 +118,7 @@ namespace Mattodev.MattoScript.Builder
 			intVars = c.intVars;
 
 			int inx = 0;
+			#endregion
 
 			foreach (string l in interLangLns)
 			{
@@ -128,6 +136,8 @@ namespace Mattodev.MattoScript.Builder
 				{
 					if (!inFunc)
 					{
+						loops = 0;
+
 						// might work? (ev0.2.0.6)
 						// update: kinda but similar issue to previous version (ev0.2.1.8)
 						foreach (var f in otherFuncs)
@@ -315,6 +325,7 @@ namespace Mattodev.MattoScript.Builder
 									//Console.WriteLine(finp[0] + "\t" + loopVars[finp[0]]);
 									loopC = runFromInterLang(funcs[ln[2]], $"{fileName}:<forloop>:<function {ln[2]}>", vars, loopVars);
 									c += loopC;
+									loops++;
 								}
 								break;
 							case "COND:IF":
@@ -335,6 +346,26 @@ namespace Mattodev.MattoScript.Builder
 										c += funcC;
 									}
 									break;
+								}
+								break;
+							case "LOOP:WHILE":
+								while (ProcessStatement(ln[1..], fileName, inx, ref c, vars, intVars))
+								{
+									string[] cd2 = funcs[ln[4]];
+									// Console.WriteLine(strjoin(cd1, "\n") + "\n" + ln[1]);
+									if (cd2[0] == "INTERNAL:NOFUNC" || cd2[0] == "")
+									{
+										err = new MTSError.UnassignedVar();
+										err.message += $"<function {ln[4]}>";
+										err.ThrowErr(fileName, c.stopIndex, ref c);
+										exit = true;
+									}
+									else
+									{
+										funcC = runFromInterLang(cd2, $"{fileName}:<function {ln[4]}>", c.vars, c.intVars);
+										c += funcC;
+									}
+									loops++;
 								}
 								break;
 						}

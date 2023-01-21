@@ -100,6 +100,15 @@ namespace Mattodev.MattoScript.Engine
                 id = "InvalidArg";
             }
         }
+        public class TooLongExecution : MTSError
+        {
+			public TooLongExecution()
+			{
+				code = 9;
+				message = "Loop was executed for too long.";
+				id = "TooLongExecution";
+			}
+		}
 
         public class InternalError : MTSError
         {
