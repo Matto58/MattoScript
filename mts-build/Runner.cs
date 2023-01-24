@@ -8,8 +8,10 @@ namespace Mattodev.MattoScript.Builder
 	public class Runner
 	{
 		public static Dictionary<string, MTSFunc> otherFuncs = new();
-		public static Dictionary<string, string> otherVars = new();
-		public static Dictionary<string, Int128> otherIntVars = new();
+		public static Dictionary<string, (string, bool)> otherVars = new();
+		public static Dictionary<string, (Int128, bool)> otherIntVars = new();
+
+		public static int loops = 0;
 
 		internal static Dictionary<string, MTSFunc> mainFuncs = new()
 		{
@@ -19,16 +21,16 @@ namespace Mattodev.MattoScript.Builder
 
 		public static bool exit = false;
 		
-		public static string CheckStrForVar(string str, ref MTSConsole c, Dictionary<string, string> vars, Dictionary<string, Int128> intVars)
+		public static string CheckStrForVar(string str, ref MTSConsole c, Dictionary<string, ValueTuple<string, bool>> vars, Dictionary<string, ValueTuple<Int128, bool>> intVars)
 		{
-			string vVal = vars.GetValueOrDefault(str, "INTERNAL:NOVAL");
-			Int128 vVal2 = intVars.GetValueOrDefault(str, 0);
-			int vValLen = vars.GetValueOrDefault("$" + str[1..], "").Length;
+			(string, bool) vVal = vars.GetValueOrDefault(str, ("INTERNAL:NOVAL", true));
+			(Int128, bool) vVal2 = intVars.GetValueOrDefault(str, (0, true));
+			int vValLen = vars.GetValueOrDefault("$" + str[1..], ("", true)).Item1.Length;
 			if (
-				((vVal == "INTERNAL:NOVAL" || vVal == "")
+				((vVal.Item1 == "INTERNAL:NOVAL" || vVal.Item1 == "")
 				&& str[0] == '$' && str[0] != '@')
-				|| (vVal2 == Int128.Zero && str[0] == '%')
-				|| (vValLen == Int128.Zero && str[0] == '@')
+				|| (vVal2.Item1 == Int128.Zero && str[0] == '%')
+				|| (vValLen == 0 && str[0] == '@')
 			)
 			{
 				MTSError err = new MTSError.UnassignedVar();
@@ -38,60 +40,76 @@ namespace Mattodev.MattoScript.Builder
 				return "";
 			}
 			return
-				str[0] == '$' ? vVal :
-				str[0] == '%' ? vVal2.ToString() :
+				str[0] == '$' ? vVal.Item1 :
+				str[0] == '%' ? vVal2.Item1.ToString() :
 				str[0] == '@' ? vValLen.ToString() :
 				str.Replace("\\", "");
 		}
 
-		public static bool ProcessStatement(string[] strings, string filename, int i, ref MTSConsole c, Dictionary<string, string> vars, Dictionary<string, Int128> intVars)
+		public static bool ProcessStatement(
+			string[] strings, string filename, int i, ref MTSConsole c,
+			Dictionary<string, (string, bool)> vars,
+			Dictionary<string, (Int128, bool)> intVars)
 		{
-			string l = CheckStrForVar(strings[0], ref c, vars, intVars);
-			string s = strings[1];
-			string r = CheckStrForVar(strings[2], ref c, vars, intVars);
-
-			string[] vs =
+			if (loops < 1000000000)
 			{
-				"eq", "neq",
-				"lt", "lte",
-				"gt", "gte"
-			};
+				string l = CheckStrForVar(strings[0], ref c, vars, intVars);
+				string s = strings[1];
+				string r = CheckStrForVar(strings[2], ref c, vars, intVars);
 
-			if (!vs.Contains(s))
+				string[] vs =
+				{
+					"eq", "neq",
+					"lt", "lte",
+					"gt", "gte"
+				};
+
+				if (!vs.Contains(s))
+				{
+					MTSError err = new MTSError.InvalidArg();
+					err.message += s;
+					err.ThrowErr(filename, i, ref c);
+					c.exitCode = err.code;
+					exit = true;
+					return false;
+				}
+
+				return s.ToLower() switch
+				{
+					"eq" => l == r,
+					"neq" => l != r,
+					"lt" => Int128.Parse(l) < Int128.Parse(r),
+					"gt" => Int128.Parse(l) > Int128.Parse(r),
+					"lte" => Int128.Parse(l) >= Int128.Parse(r),
+					"gte" => Int128.Parse(l) <= Int128.Parse(r),
+					_ => false
+				};
+			}
+			else
 			{
-				MTSError err = new MTSError.InvalidArg();
-				err.message += s;
-				err.ThrowErr(filename, i, ref c);
+				MTSError err = new MTSError.TooLongExecution();
 				c.exitCode = err.code;
 				exit = true;
-				return false;
 			}
-
-			return s.ToLower() switch
-			{
-				"eq" => l == r,
-				"neq" => l != r,
-				"lt" => Int128.Parse(l) < Int128.Parse(r),
-				"gt" => Int128.Parse(l) > Int128.Parse(r),
-				"lte" => Int128.Parse(l) >= Int128.Parse(r),
-				"gte" => Int128.Parse(l) <= Int128.Parse(r),
-				_ => false
-			};
+			return false;
 		}
 
-		public static MTSConsole runFromInterLang(string[] interLangLns, string fileName, Dictionary<string, string> variables, Dictionary<string, Int128> intVariables)
+		public static MTSConsole runFromInterLang(string[] interLangLns, string fileName,
+			Dictionary<string, ValueTuple<string, bool>> variables,
+			Dictionary<string, ValueTuple<Int128, bool>> intVariables)
 		{
+			#region vars
 			MTSConsole c = new(), varC = new();
-			Dictionary<string, string> vars = new()
+			Dictionary<string, ValueTuple<string, bool>> vars = new()
 			{
-				{ "$ver.engine", MTSInfo.engVer },
-				{ "$ver.mtscript", MTSInfo.mtsVer },
-				{ "$con.title", c.title }
+				{ "$ver.engine", (MTSInfo.engVer, true) },
+				{ "$ver.mtscript", (MTSInfo.mtsVer, true) },
+				{ "$con.title", (c.title, false) }
 			};
-			Dictionary<string, Int128> intVars = new()
+			Dictionary<string, ValueTuple<Int128, bool>> intVars = new()
 			{
-				{ "$con.bgcolor", (Int128)(int)Console.BackgroundColor },
-				{ "$con.fgcolor", (Int128)(int)Console.ForegroundColor }
+				{ "$con.bgcolor", ((Int128)(int)Console.BackgroundColor, false) },
+				{ "$con.fgcolor", ((Int128)(int)Console.ForegroundColor, false) }
 			};
 			Dictionary<string, string[]> funcs = new();
 			List<string> func = new();
@@ -111,6 +129,7 @@ namespace Mattodev.MattoScript.Builder
 			intVars = c.intVars;
 
 			int inx = 0;
+			#endregion
 
 			foreach (string l in interLangLns)
 			{
@@ -128,6 +147,8 @@ namespace Mattodev.MattoScript.Builder
 				{
 					if (!inFunc)
 					{
+						loops = 0;
+
 						// might work? (ev0.2.0.6)
 						// update: kinda but similar issue to previous version (ev0.2.1.8)
 						foreach (var f in otherFuncs)
@@ -171,14 +192,14 @@ namespace Mattodev.MattoScript.Builder
 								//Console.WriteLine(c.cont);
 
 								// revamped printing! (ev0.2.1.9)
-								Consol3.conOut(ref c, CheckStrForVar(ln[2], ref c, vars, intVars), ln[1] != "1");
+								Consol3.conOut(ref c, CheckStrForVar(ln[2], ref c, vars, intVars), ln[1] == "1");
 								break;
 							case "CON:INPUT":
 								c.disp();
 								c.clr();
 								string? inp = Console.ReadLine();
 								if (inp != null)
-									vars[ln[1]] = inp;
+									vars[ln[1]] = (inp, false);
 								break;
 							case "CON:CLEAR":
 								Console.Clear();
@@ -191,7 +212,16 @@ namespace Mattodev.MattoScript.Builder
 								break;
 							case "SETVAR":
 								string[] eq = ln[1].Split("=");
-								vars[eq[0]] = CheckStrForVar(eq[1], ref c, vars, intVars);
+								if (!vars.ContainsKey(eq[0]) || eq[0][1] != '!')
+									vars[eq[0]] = (CheckStrForVar(eq[1], ref c, vars, intVars), eq[0][1] == '!');
+								else
+								{
+									err = new MTSError.VarIsConst();
+									err.message += eq[0];
+									err.ThrowErr(fileName, c.stopIndex, ref c);
+									c.exitCode = err.code;
+									exit = true;
+								}
 								break;
 
 							// the FLEX module: FiLe EXecutor
@@ -266,29 +296,37 @@ namespace Mattodev.MattoScript.Builder
 							// its integering time
 							case "INTEGER:SETVAR":
 								string[] eqv = ln[1].Split("=");
-								fn = CheckStrForVar(eqv[1], ref c, vars, intVars);
-								intVars[eqv[0]] = Int128.Parse(fn);
+								if (!vars.ContainsKey(eqv[0]) || eqv[0][1] != '!')
+									intVars[eqv[0]] = (Int128.Parse(CheckStrForVar(eqv[1], ref c, vars, intVars)), eqv[0][1] == '!');
+								else
+								{
+									err = new MTSError.VarIsConst();
+									err.message += eqv[0];
+									err.ThrowErr(fileName, c.stopIndex, ref c);
+									c.exitCode = err.code;
+									exit = true;
+								}
 								break;
 							case "INTEGER:CALC":
 								foreach (string val in ln[3..])
 								{
-									Int128 v = val[0] != '%' ? Int128.Parse(val) : intVars[val];
+									Int128 v = val[0] != '%' ? Int128.Parse(val) : intVars[val].Item1;
 									switch (ln[2])
 									{
 										case "+":
-											intVars[ln[1]] += v;
+											intVars[ln[1]] = (intVars[ln[1]].Item1 + v, false);
 											break;
 										case "-":
-											intVars[ln[1]] -= v;
+											intVars[ln[1]] = (intVars[ln[1]].Item1 - v, false);
 											break;
 										case "*":
-											intVars[ln[1]] *= v;
+											intVars[ln[1]] = (intVars[ln[1]].Item1 * v, false);
 											break;
 										case "/":
-											intVars[ln[1]] /= v;
+											intVars[ln[1]] = (intVars[ln[1]].Item1 / v, false);
 											break;
 										case "^":
-											intVars[ln[1]] = (Int128)Math.Pow((double)intVars[ln[1]], (double)v);
+											intVars[ln[1]] = ((Int128)Math.Pow((double)intVars[ln[1]].Item1, (double)v), false);
 											break;
 										default:
 											err = new MTSError.InvalidArg();
@@ -310,11 +348,12 @@ namespace Mattodev.MattoScript.Builder
 								};
 								for (Int128 fi = fvals2[0]; fi < fvals2[1]; fi += fvals.Length < 3 ? 1 : Int128.Parse(fvals[2]))
 								{
-									Dictionary<string, Int128> loopVars = intVars;
-									loopVars[finp[0]] = fi;
+									var loopVars = intVars;
+									loopVars[finp[0]] = (fi, true);
 									//Console.WriteLine(finp[0] + "\t" + loopVars[finp[0]]);
 									loopC = runFromInterLang(funcs[ln[2]], $"{fileName}:<forloop>:<function {ln[2]}>", vars, loopVars);
 									c += loopC;
+									loops++;
 								}
 								break;
 							case "COND:IF":
@@ -335,6 +374,26 @@ namespace Mattodev.MattoScript.Builder
 										c += funcC;
 									}
 									break;
+								}
+								break;
+							case "LOOP:WHILE":
+								while (ProcessStatement(ln[1..], fileName, inx, ref c, vars, intVars))
+								{
+									string[] cd2 = funcs[ln[4]];
+									// Console.WriteLine(strjoin(cd1, "\n") + "\n" + ln[1]);
+									if (cd2[0] == "INTERNAL:NOFUNC" || cd2[0] == "")
+									{
+										err = new MTSError.UnassignedVar();
+										err.message += $"<function {ln[4]}>";
+										err.ThrowErr(fileName, c.stopIndex, ref c);
+										exit = true;
+									}
+									else
+									{
+										funcC = runFromInterLang(cd2, $"{fileName}:<function {ln[4]}>", c.vars, c.intVars);
+										c += funcC;
+									}
+									loops++;
 								}
 								break;
 						}
@@ -358,10 +417,10 @@ namespace Mattodev.MattoScript.Builder
 					}
 
 					inx++;
-					c.title = vars["$con.title"];
+					c.title = vars["$con.title"].Item1;
 					Console.Title = c.title;
-					Console.ForegroundColor = (ConsoleColor)(int)intVars["$con.fgcolor"];
-					Console.BackgroundColor = (ConsoleColor)(int)intVars["$con.bgcolor"];
+					Console.ForegroundColor = (ConsoleColor)(int)intVars["$con.fgcolor"].Item1;
+					Console.BackgroundColor = (ConsoleColor)(int)intVars["$con.bgcolor"].Item1;
 				}
 				catch (Exception e)
 				{
@@ -374,7 +433,10 @@ namespace Mattodev.MattoScript.Builder
 			}
 			end: return c;
 		}
-		public static MTSConsole runFromInterLang(string interLangCode, string fileName, Dictionary<string,string> variables, Dictionary<string, Int128> intVariables)
+		public static MTSConsole runFromInterLang
+			(string interLangCode, string fileName,
+			Dictionary<string, (string, bool)> variables,
+			Dictionary<string, (Int128, bool)> intVariables)
 			=> runFromInterLang(interLangCode.ReplaceLineEndings("\n").Split("\n"), fileName, variables, intVariables);
 
 		public static MTSConsole runFromCode(string[] lns, string fileName)

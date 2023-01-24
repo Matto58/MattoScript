@@ -15,7 +15,7 @@
                         string[] a = args[1].Split('=');
                         try
                         {
-                            con.vars[a[0]] = File.ReadAllText(a[1]);
+                            con.vars[a[0]] = (File.ReadAllText(a[1]), a[0][1] == '!');
                         }
                         catch (FileNotFoundException)
                         {
@@ -46,7 +46,7 @@
 
                     public override void Exec(ref MTSConsole con, string[] args, string fileName, ref bool exit)
                     {
-                        File.WriteAllText(args[2], con.vars[args[1]]);
+                        File.WriteAllText(args[2], con.vars[args[1]].Item1);
                     }
 
                     public override string ToInterlang(int i, string[] args, string fileName)

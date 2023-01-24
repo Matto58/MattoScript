@@ -17,7 +17,7 @@
         }
         public class MTSInfo
         {
-            public static string engVer = "0.2.1.10";
+            public static string engVer = "0.2.2.11";
             public static string mtsVer = "1";
         }
         public class MTSConsole
@@ -26,8 +26,8 @@
             public string title { get; set; }
             public int exitCode { get; set; }
             public int stopIndex { get; set; }
-            public Dictionary<string, string> vars { get; set; }
-            public Dictionary<string, Int128> intVars { get; set; }
+			public Dictionary<string, ValueTuple<string, bool>> vars { get; set; }
+			public Dictionary<string, ValueTuple<Int128, bool>> intVars { get; set; }
             public Dictionary<string, string[]> funcs { get; set; }
 
             public MTSConsole()
@@ -70,7 +70,7 @@
             public static MTSConsole operator *(MTSConsole a, int b)
             {
                 MTSConsole c = a;
-                if (b < 0) throw new IndexOutOfRangeException();
+                if (b < 0) throw new IndexOutOfRangeException("Multiplier less than 0.");
                 if (b == 0)
                 {
                     c.cont = "";

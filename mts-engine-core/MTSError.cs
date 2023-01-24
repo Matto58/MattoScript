@@ -99,9 +99,27 @@ namespace Mattodev.MattoScript.Engine
                 message = "This is not a valid argument: ";
                 id = "InvalidArg";
             }
-        }
+		}
+		public class TooLongExecution : MTSError
+		{
+			public TooLongExecution()
+			{
+				code = 9;
+				message = "Loop was executed for too long.";
+				id = "TooLongExecution";
+			}
+		}
+		public class VarIsConst : MTSError
+		{
+			public VarIsConst()
+			{
+				code = 10;
+				message = "Tried to modify constant variable: ";
+				id = "VarIsConst";
+			}
+		}
 
-        public class InternalError : MTSError
+		public class InternalError : MTSError
         {
             public InternalError(Exception e)
             {
