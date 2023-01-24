@@ -104,7 +104,7 @@ namespace Mattodev.MattoScript.Builder
 			{
 				{ "$ver.engine", (MTSInfo.engVer, true) },
 				{ "$ver.mtscript", (MTSInfo.mtsVer, true) },
-				{ "$con.title", (c.title, true) }
+				{ "$con.title", (c.title, false) }
 			};
 			Dictionary<string, ValueTuple<Int128, bool>> intVars = new()
 			{
