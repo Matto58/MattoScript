@@ -26,8 +26,8 @@
             public string title { get; set; }
             public int exitCode { get; set; }
             public int stopIndex { get; set; }
-            public Dictionary<string, string> vars { get; set; }
-            public Dictionary<string, Int128> intVars { get; set; }
+			public Dictionary<string, ValueTuple<string, bool>> vars { get; set; }
+			public Dictionary<string, ValueTuple<Int128, bool>> intVars { get; set; }
             public Dictionary<string, string[]> funcs { get; set; }
 
             public MTSConsole()
