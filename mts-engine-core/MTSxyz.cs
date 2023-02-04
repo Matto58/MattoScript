@@ -17,7 +17,7 @@
         }
         public class MTSInfo
         {
-            public static string engVer = "0.2.2.11";
+            public static string engVer = "0.3.0.12";
             public static string mtsVer = "1";
         }
         public class MTSConsole
@@ -26,9 +26,9 @@
             public string title { get; set; }
             public int exitCode { get; set; }
             public int stopIndex { get; set; }
-			public Dictionary<string, ValueTuple<string, bool>> vars { get; set; }
-			public Dictionary<string, ValueTuple<Int128, bool>> intVars { get; set; }
-            public Dictionary<string, string[]> funcs { get; set; }
+			public Dictionary<string, (string, bool)> vars { get; set; }
+			public Dictionary<string, (Int128, bool)> intVars { get; set; }
+            public Dictionary<string, (string[], string[])> funcs { get; set; }
 
             public MTSConsole()
             {
