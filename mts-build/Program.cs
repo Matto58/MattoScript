@@ -1,4 +1,5 @@
-﻿using Mattodev.MattoScript.Engine;
+﻿using System.Diagnostics;
+using Mattodev.MattoScript.Engine;
 using static Mattodev.MattoScript.Engine.CoreEng;
 
 namespace Mattodev.MattoScript.Builder
@@ -10,7 +11,9 @@ namespace Mattodev.MattoScript.Builder
             MTSConsole c = new();
             Console.Title = c.title;
 
-            if (args.Length == 0)
+			Stopwatch s = new();
+			s.Start();
+			if (args.Length == 0)
             {
                 MTSError.TooLittleArgs err = new();
                 err.message += args.Length;
@@ -43,9 +46,10 @@ namespace Mattodev.MattoScript.Builder
             c = Runner.runFromCode(code, args[0]);
 
             end:
-            c.disp();
+			s.Stop();
+			c.disp();
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine($"(exit code {c.exitCode})");
+            Console.WriteLine($"(exit code {c.exitCode}, execution time {s.ElapsedMilliseconds}ms)");
             Console.ResetColor();
             return c.exitCode;
         }

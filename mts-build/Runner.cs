@@ -27,7 +27,16 @@ namespace Mattodev.MattoScript.Builder
 			(string, bool) vVal = c.vars.GetValueOrDefault(str, ("INTERNAL:NOVAL", true));
 			(Int128, bool) vVal2 = c.intVars.GetValueOrDefault(str, (0, true));
 			int vValLen = c.vars.GetValueOrDefault("$" + str[1..], ("", true)).Item1.Length;
-			if (
+
+			if (str[0] == '>')
+			{
+				string[] split = str[1..].Split('/');
+				//c.funcs.ToList().ForEach(a => Console.WriteLine(a.Key));
+				CallFunc(split[0], split, 0, fileName, ref c);
+				
+				if (c.returnVar != null) return c.returnVar.Value.Item1;
+			}
+			else if (
 				((vVal.Item1 == "INTERNAL:NOVAL" || vVal.Item1 == "")
 				&& str[0] == '$' && str[0] != '@')
 				|| (vVal2.Item1 == Int128.Zero && str[0] == '%')
@@ -63,7 +72,7 @@ namespace Mattodev.MattoScript.Builder
 			var newVars = c.vars;
 			//Console.WriteLine($"{c.funcs[ln[1]].Item2.Length}\t{off}");
 			for (int argInx = 0; argInx < ln.Length - off - 1; argInx++)
-				newVars[c.funcs[ln[1]].Item2[argInx]] = (ln[argInx + off + 1], true);
+				newVars[c.funcs[funcName].Item2[argInx]] = (ln[argInx + off + 1], true);
 				
 			c += runFromInterLang(cd1, $"{fileName}:<function {ln[1]}>", c.vars, c.intVars);
 			
@@ -315,6 +324,10 @@ namespace Mattodev.MattoScript.Builder
 							case "FUNC:CALL":
 								CallFunc(ln[1], ln, 1, fileName, ref c);
 								break;
+							case "FUNC:RETURN":
+								exit = true;
+								c.returnVar = (CheckStrForVar(ln[1], fileName, ref c), false);
+								break;
 
 							// its integering time
 							case "INTEGER:SETVAR":
@@ -444,10 +457,10 @@ namespace Mattodev.MattoScript.Builder
 			}
 			end: return c;
 		}
-		public static MTSConsole runFromInterLang
-			(string interLangCode, string fileName,
+		public static MTSConsole runFromInterLang(string interLangCode, string fileName,
 			Dictionary<string, (string, bool)> variables,
-			Dictionary<string, (Int128, bool)> intVariables)
+			Dictionary<string, (Int128, bool)> intVariables,
+			bool legacyConInput = true)
 			=> runFromInterLang(interLangCode.ReplaceLineEndings("\n").Split("\n"), fileName, variables, intVariables);
 
 		public static MTSConsole runFromCode(string[] lns, string fileName, bool legacyConInput = true)

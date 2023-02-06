@@ -29,6 +29,7 @@
 			public Dictionary<string, (string, bool)> vars { get; set; }
 			public Dictionary<string, (Int128, bool)> intVars { get; set; }
             public Dictionary<string, (string[], string[])> funcs { get; set; }
+            public (string, bool)? returnVar { get; set; }
 
             public MTSConsole()
             {
@@ -58,6 +59,14 @@
                     if (!funcs.ContainsKey(f.Key))
                         funcs[f.Key] = f.Value;
             }
+            public void retValue(string varName)
+            {
+                if (returnVar != null)
+                {
+                    vars[varName] = ((string, bool))returnVar;
+                    returnVar = null;
+                }
+            }
 
             public static MTSConsole operator +(MTSConsole a, MTSConsole b)
             {
@@ -65,6 +74,7 @@
                 c.cont = a.cont + b.cont;
                 c.copyVars(b);
                 c.copyFuncs(b);
+                c.returnVar = b.returnVar;
                 return c;
             }
             public static MTSConsole operator *(MTSConsole a, int b)

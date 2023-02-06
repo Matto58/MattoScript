@@ -157,6 +157,17 @@ namespace Mattodev.MattoScript.Builder
 								goto end;
 							}
 							break;
+						case "return" or "func.return":
+							try
+							{
+								oc.Add($"{i};FUNC:RETURN,{ln[1]}");
+							}
+							catch (IndexOutOfRangeException)
+							{
+								oc.Add($"{i};INTERNAL:ERR_THROW,TooLittleArgs,{fileName},{i},{ln.Length}");
+								goto end;
+							}
+							break;
 
 						case "for" or "loop.for":
 							try
