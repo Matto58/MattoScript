@@ -43,7 +43,7 @@ namespace Mattodev.MattoScript.Builder
                 goto end;
             }
 
-            c = Runner.runFromCode(code, args[0]);
+            Runner.runFromCode(code, args[0], ref c);
 
             end:
 			s.Stop();

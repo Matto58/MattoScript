@@ -74,7 +74,7 @@ namespace Mattodev.MattoScript.Builder
 			for (int argInx = 0; argInx < ln.Length - off - 1; argInx++)
 				newVars[c.funcs[funcName].Item2[argInx]] = (ln[argInx + off + 1], true);
 				
-			c += runFromInterLang(cd1, $"{fileName}:<function {ln[1]}>", c.vars, c.intVars);
+			c += runFromInterLang(cd1, $"{fileName}:<function {ln[1]}>", c.vars, c.intVars, ref c);
 			
 			return true;
 		}
@@ -127,10 +127,10 @@ namespace Mattodev.MattoScript.Builder
 		public static MTSConsole runFromInterLang(string[] interLangLns, string fileName,
 			Dictionary<string, (string, bool)> variables,
 			Dictionary<string, (Int128, bool)> intVariables,
-			bool legacyConInput = true)
+			ref MTSConsole c, bool legacyConInput = true)
 		{
 			#region vars
-			MTSConsole c = new(), varC = new();
+			MTSConsole varC = new();
 			Dictionary<string, (string, bool)> vars = new()
 			{
 				{ "$ver.engine", (MTSInfo.engVer, true) },
@@ -271,7 +271,7 @@ namespace Mattodev.MattoScript.Builder
 								fn = CheckStrForVar(ln[1], fileName, ref c);
 								try
 								{
-									flexC = runFromCode(File.ReadAllLines(fn), fn);
+									flexC = runFromCode(File.ReadAllLines(fn), fn, ref c);
 									c += flexC;
 								}
 								catch (FileNotFoundException)
@@ -286,7 +286,7 @@ namespace Mattodev.MattoScript.Builder
 								fn = CheckStrForVar(ln[1], fileName, ref c);
 								try
 								{
-									flexC = runFromCode(File.ReadAllLines(fn), fn);
+									flexC = runFromCode(File.ReadAllLines(fn), fn, ref c);
 									c.copyVars(flexC);
 								}
 								catch (FileNotFoundException)
@@ -301,7 +301,7 @@ namespace Mattodev.MattoScript.Builder
 								fn = CheckStrForVar(ln[1], fileName, ref c);
 								try
 								{
-									flexC = runFromCode(File.ReadAllLines(fn), fn);
+									flexC = runFromCode(File.ReadAllLines(fn), fn, ref c);
 									c.copyFuncs(flexC);
 								}
 								catch (FileNotFoundException)
@@ -387,7 +387,7 @@ namespace Mattodev.MattoScript.Builder
 									var loopVars = intVars;
 									loopVars[finp[0]] = (fi, true);
 									//Console.WriteLine(finp[0] + "\t" + loopVars[finp[0]]);
-									loopC = runFromInterLang(funcs[ln[2]].Item1, $"{fileName}:<forloop>:<function {ln[2]}>", vars, loopVars);
+									loopC = runFromInterLang(funcs[ln[2]].Item1, $"{fileName}:<forloop>:<function {ln[2]}>", vars, loopVars, ref c, legacyConInput);
 									c += loopC;
 									loops++;
 								}
@@ -406,7 +406,7 @@ namespace Mattodev.MattoScript.Builder
 									}
 									else
 									{
-										funcC = runFromInterLang(cd2, $"{fileName}:<function {ln[4]}>", c.vars, c.intVars);
+										funcC = runFromInterLang(cd2, $"{fileName}:<function {ln[4]}>", c.vars, c.intVars, ref c, legacyConInput);
 										c += funcC;
 									}
 									break;
@@ -460,12 +460,12 @@ namespace Mattodev.MattoScript.Builder
 		public static MTSConsole runFromInterLang(string interLangCode, string fileName,
 			Dictionary<string, (string, bool)> variables,
 			Dictionary<string, (Int128, bool)> intVariables,
-			bool legacyConInput = true)
-			=> runFromInterLang(interLangCode.ReplaceLineEndings("\n").Split("\n"), fileName, variables, intVariables);
+			ref MTSConsole c, bool legacyConInput = true)
+			=> runFromInterLang(interLangCode.ReplaceLineEndings("\n").Split("\n"), fileName, variables, intVariables, ref c, legacyConInput);
 
-		public static MTSConsole runFromCode(string[] lns, string fileName, bool legacyConInput = true)
-			=> runFromInterLang(InterLang.toInterLang(lns, fileName), fileName, otherVars, otherIntVars, legacyConInput);
-		public static MTSConsole runFromCode(string code, string fileName, bool legacyConInput = true)
-			=> runFromCode(code.ReplaceLineEndings("\n").Split("\n"), fileName, legacyConInput);
+		public static MTSConsole runFromCode(string[] lns, string fileName, ref MTSConsole c, bool legacyConInput = true)
+			=> runFromInterLang(InterLang.toInterLang(lns, fileName), fileName, otherVars, otherIntVars, ref c, legacyConInput);
+		public static MTSConsole runFromCode(string code, string fileName, ref MTSConsole c,bool legacyConInput = true)
+			=> runFromCode(code.ReplaceLineEndings("\n").Split("\n"), fileName, ref c, legacyConInput);
 	}
 }
