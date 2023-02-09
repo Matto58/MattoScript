@@ -238,7 +238,7 @@ namespace Mattodev.MattoScript.Builder
 								else
 								{
 									input = true;
-									while (input) { } // do nothing while we're waiting for input (ev0.3.0.12)
+									while (input); // do nothing while we're waiting for input (ev0.3.0.12)
 									vars[ln[1]] = (inputText, false);
 									c.cont += inputText;
 								}
@@ -465,7 +465,7 @@ namespace Mattodev.MattoScript.Builder
 
 		public static MTSConsole runFromCode(string[] lns, string fileName, ref MTSConsole c, bool legacyConInput = true)
 			=> runFromInterLang(InterLang.toInterLang(lns, fileName), fileName, otherVars, otherIntVars, ref c, legacyConInput);
-		public static MTSConsole runFromCode(string code, string fileName, ref MTSConsole c,bool legacyConInput = true)
+		public static MTSConsole runFromCode(string code, string fileName, ref MTSConsole c, bool legacyConInput = true)
 			=> runFromCode(code.ReplaceLineEndings("\n").Split("\n"), fileName, ref c, legacyConInput);
 	}
 }
