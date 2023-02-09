@@ -10,6 +10,7 @@ namespace Mattodev.MattoScript.Builder
 		public static Dictionary<string, MTSFunc> otherFuncs = new();
 		public static Dictionary<string, (string, bool)> otherVars = new();
 		public static Dictionary<string, (Int128, bool)> otherIntVars = new();
+		//public static Dictionary<string, (string, Int128)[]> otherEnums = new();
 
 		public static int loops = 0;
 		public static string inputText = "";
@@ -70,11 +71,17 @@ namespace Mattodev.MattoScript.Builder
 			}
 
 			var newVars = c.vars;
+			var newIVars = c.intVars;
 			//Console.WriteLine($"{c.funcs[ln[1]].Item2.Length}\t{off}");
 			for (int argInx = 0; argInx < ln.Length - off - 1; argInx++)
-				newVars[c.funcs[funcName].Item2[argInx]] = (ln[argInx + off + 1], true);
+			{
+				if (c.funcs[funcName].Item2[argInx][0] == '$')
+					newVars[c.funcs[funcName].Item2[argInx]] = (ln[argInx + off + 1], true);
+				if (c.funcs[funcName].Item2[argInx][0] == '%')
+					newIVars[c.funcs[funcName].Item2[argInx]] = (Int128.Parse(ln[argInx + off + 1]), true);
+			}
 				
-			c += runFromInterLang(cd1, $"{fileName}:<function {ln[1]}>", c.vars, c.intVars, ref c);
+			c += runFromInterLang(cd1, $"{fileName}:<function {ln[1]}>", newVars, newIVars, ref c);
 			
 			return true;
 		}
@@ -127,6 +134,7 @@ namespace Mattodev.MattoScript.Builder
 		public static MTSConsole runFromInterLang(string[] interLangLns, string fileName,
 			Dictionary<string, (string, bool)> variables,
 			Dictionary<string, (Int128, bool)> intVariables,
+			//Dictionary<string, (string, Int128)[]> enumerators,
 			ref MTSConsole c, bool legacyConInput = true)
 		{
 			#region vars
@@ -143,6 +151,7 @@ namespace Mattodev.MattoScript.Builder
 				{ "$con.fgcolor", ((Int128)(int)Console.ForegroundColor, false) }
 			};
 			Dictionary<string, (string[], string[])> funcs = new();
+			//Dictionary<string, (string, Int128)[]> enums = new();
 			List<string> func = new();
 			List<string> funcArgs = new();
 			string funcName = "";
@@ -460,6 +469,7 @@ namespace Mattodev.MattoScript.Builder
 		public static MTSConsole runFromInterLang(string interLangCode, string fileName,
 			Dictionary<string, (string, bool)> variables,
 			Dictionary<string, (Int128, bool)> intVariables,
+			//Dictionary<string, (string, Int128)[]> enumerators,
 			ref MTSConsole c, bool legacyConInput = true)
 			=> runFromInterLang(interLangCode.ReplaceLineEndings("\n").Split("\n"), fileName, variables, intVariables, ref c, legacyConInput);
 

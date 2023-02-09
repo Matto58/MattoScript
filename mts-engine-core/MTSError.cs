@@ -23,9 +23,10 @@ namespace Mattodev.MattoScript.Engine
 				$"Error! ({id}) MTS-{Convert.ToString(code, 16)}: {(code != -1 ? $"'{message}'" : message)}\n" +
 				$"\tLine {line + 1} in file {fileName}"
 			);
-			if (code == -1 && cause != null)
+			if (code == -1 && cause != null && cause.StackTrace != null)
 			{
-				con.cont += "\n\tStack trace (report at github.com/Matto58/MattoScript):\n" + cause.StackTrace;
+				con.cont += "\n\tStack trace (report at github.com/Matto58/MattoScript):\n"
+					+ string.Join("\n", cause.StackTrace.Split('\n').Select(ln => ln.Replace("    ", "\t\t")));
 			}
 			return code;
 		}
