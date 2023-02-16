@@ -17,7 +17,7 @@
         }
         public class MTSInfo
         {
-            public static string engVer = "0.2.2.11";
+            public static string engVer = "0.3.0.12";
             public static string mtsVer = "1";
         }
         public class MTSConsole
@@ -26,9 +26,11 @@
             public string title { get; set; }
             public int exitCode { get; set; }
             public int stopIndex { get; set; }
-			public Dictionary<string, ValueTuple<string, bool>> vars { get; set; }
-			public Dictionary<string, ValueTuple<Int128, bool>> intVars { get; set; }
-            public Dictionary<string, string[]> funcs { get; set; }
+			public Dictionary<string, (string, bool)> vars { get; set; }
+			public Dictionary<string, (Int128, bool)> intVars { get; set; }
+            public Dictionary<string, (string[], string[])> funcs { get; set; }
+            public Dictionary<string, (string, Int128)[]> enums { get; set; }
+			public (string, bool)? returnVar { get; set; }
 
             public MTSConsole()
             {
@@ -37,6 +39,7 @@
                 vars = new();
                 intVars = new();
                 funcs = new();
+                enums = new();
             }
 
             public override string ToString() => cont;
@@ -58,6 +61,14 @@
                     if (!funcs.ContainsKey(f.Key))
                         funcs[f.Key] = f.Value;
             }
+            public void retValue(string varName)
+            {
+                if (returnVar != null)
+                {
+                    vars[varName] = ((string, bool))returnVar;
+                    returnVar = null;
+                }
+            }
 
             public static MTSConsole operator +(MTSConsole a, MTSConsole b)
             {
@@ -65,6 +76,7 @@
                 c.cont = a.cont + b.cont;
                 c.copyVars(b);
                 c.copyFuncs(b);
+                c.returnVar = b.returnVar;
                 return c;
             }
             public static MTSConsole operator *(MTSConsole a, int b)

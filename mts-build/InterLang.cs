@@ -135,7 +135,7 @@ namespace Mattodev.MattoScript.Builder
 						case "func.start":
 							try
 							{
-								oc.Add($"{i};FUNC:START,{ln[1]}");
+								oc.Add($"{i};FUNC:START,{string.Join(",", ln[1..])}");
 							}
 							catch (IndexOutOfRangeException)
 							{
@@ -149,7 +149,18 @@ namespace Mattodev.MattoScript.Builder
 						case "func.call" or "call":
 							try
 							{
-								oc.Add($"{i};FUNC:CALL,{ln[1]}");
+								oc.Add($"{i};FUNC:CALL,{string.Join(",", ln[1..])}");
+							}
+							catch (IndexOutOfRangeException)
+							{
+								oc.Add($"{i};INTERNAL:ERR_THROW,TooLittleArgs,{fileName},{i},{ln.Length}");
+								goto end;
+							}
+							break;
+						case "return" or "func.return":
+							try
+							{
+								oc.Add($"{i};FUNC:RETURN,{ln[1]}");
 							}
 							catch (IndexOutOfRangeException)
 							{
