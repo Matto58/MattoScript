@@ -19,14 +19,17 @@ namespace Mattodev.MattoScript.Engine
 
 		public int ThrowErr(string fileName, int line, ref MTSConsole con)
 		{
-			con.cont += (
+			con.cont += 
 				$"Error! ({id}) MTS-{Convert.ToString(code, 16)}: {(code != -1 ? $"'{message}'" : message)}\n" +
-				$"\tLine {line + 1} in file {fileName}"
-			);
+				$"\tLine {line + 1} in file {fileName}";
 			if (code == -1 && cause != null && cause.StackTrace != null)
 			{
 				con.cont += "\n\tStack trace (report at github.com/Matto58/MattoScript):\n"
 					+ string.Join("\n", cause.StackTrace.Split('\n').Select(ln => ln.Replace("    ", "\t\t")));
+			}
+			else if (code == -1 && cause != null && cause.StackTrace == null)
+			{
+				con.cont += "\n\tThere was no stack trace provided, unfortunately.";
 			}
 			return code;
 		}

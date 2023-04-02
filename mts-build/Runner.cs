@@ -10,7 +10,7 @@ namespace Mattodev.MattoScript.Builder
 		public static Dictionary<string, MTSFunc> otherFuncs = new();
 		public static Dictionary<string, (string, bool)> otherVars = new();
 		public static Dictionary<string, (Int128, bool)> otherIntVars = new();
-		//public static Dictionary<string, (string, Int128)[]> otherEnums = new();
+		public static Dictionary<string, (string, Int128)[]> otherEnums = new();
 
 		public static int loops = 0;
 		public static string inputText = "";
@@ -81,7 +81,7 @@ namespace Mattodev.MattoScript.Builder
 					newIVars[c.funcs[funcName].Item2[argInx]] = (Int128.Parse(ln[argInx + off + 1]), true);
 			}
 				
-			c += runFromInterLang(cd1, $"{fileName}:<function {ln[1]}>", newVars, newIVars, ref c);
+			c += runFromInterLang(cd1, $"{fileName}:<function {ln[1]}>", newVars, newIVars, c.enums, ref c);
 			
 			return true;
 		}
@@ -134,7 +134,7 @@ namespace Mattodev.MattoScript.Builder
 		public static MTSConsole runFromInterLang(string[] interLangLns, string fileName,
 			Dictionary<string, (string, bool)> variables,
 			Dictionary<string, (Int128, bool)> intVariables,
-			//Dictionary<string, (string, Int128)[]> enumerators,
+			Dictionary<string, (string, Int128)[]> enumerators,
 			ref MTSConsole c, bool legacyConInput = true)
 		{
 			#region vars
@@ -151,25 +151,29 @@ namespace Mattodev.MattoScript.Builder
 				{ "$con.fgcolor", ((Int128)(int)Console.ForegroundColor, false) }
 			};
 			Dictionary<string, (string[], string[])> funcs = new();
-			//Dictionary<string, (string, Int128)[]> enums = new();
+			Dictionary<string, (string, Int128)[]> enums = new();
 			List<string> func = new();
 			List<string> funcArgs = new();
-			string funcName = "";
+			List<(string, Int128)> enum2 = new();
+			string funcName = "", enumName = "";
 
-			bool inFunc = false;
+			bool inFunc = false, inEnum = false;
 
 			c.vars = vars;
 			c.intVars = intVars;
+			c.enums = enums;
 
 			varC.vars = variables;
 			varC.intVars = intVariables;
+			varC.enums = enumerators;
 
 			c.copyVars(varC);
+			c.copyEnums(varC);
 
 			vars = c.vars;
 			intVars = c.intVars;
 
-			int inx = 0;
+			//int inx = 0; i don't have to count index bc it's already in the line (ev0.3.0.12)
 			#endregion
 
 			foreach (string l in interLangLns)
@@ -179,14 +183,14 @@ namespace Mattodev.MattoScript.Builder
 				c.stopIndex = int.Parse(i[0]);
 				//Console.WriteLine(l);
 				MTSError err;
-				MTSConsole flexC, funcC, loopC;
+				MTSConsole flexC, funcC;
 				string fn;
 
 				if (exit) goto end;
 
 				try
 				{
-					if (!inFunc)
+					if (!inFunc && !inEnum)
 					{
 						loops = 0;
 
@@ -258,7 +262,7 @@ namespace Mattodev.MattoScript.Builder
 							case "INTERNAL:ERR_THROW":
 								err = MTSFunc.GetErrFromName(ln[1]);
 								err.message += ln[4];
-								c.exitCode = err.ThrowErr(ln[2], int.Parse(ln[3]), ref c);
+								c.exitCode = err.ThrowErr(ln[2], c.stopIndex, ref c);
 								exit = true;
 								break;
 							case "SETVAR":
@@ -396,8 +400,7 @@ namespace Mattodev.MattoScript.Builder
 									var loopVars = intVars;
 									loopVars[finp[0]] = (fi, true);
 									//Console.WriteLine(finp[0] + "\t" + loopVars[finp[0]]);
-									loopC = runFromInterLang(funcs[ln[2]].Item1, $"{fileName}:<forloop>:<function {ln[2]}>", vars, loopVars, ref c, legacyConInput);
-									c += loopC;
+									runFromInterLang(funcs[ln[2]].Item1, $"{fileName}:<forloop>:<function {ln[2]}>", vars, loopVars, c.enums, ref c, legacyConInput);
 									loops++;
 								}
 								break;
@@ -415,7 +418,7 @@ namespace Mattodev.MattoScript.Builder
 									}
 									else
 									{
-										funcC = runFromInterLang(cd2, $"{fileName}:<function {ln[4]}>", c.vars, c.intVars, ref c, legacyConInput);
+										funcC = runFromInterLang(cd2, $"{fileName}:<function {ln[4]}>", c.vars, c.intVars, c.enums, ref c, legacyConInput);
 										c += funcC;
 									}
 									break;
@@ -428,14 +431,33 @@ namespace Mattodev.MattoScript.Builder
 									loops++;
 								}
 								break;
+
+							// thanks @kenan238 for the idea of enums
+							// technically they suggested structs but i confused
+							// structs with enums and here we are, with enums
+							// also structs will be hard to add, maybe ev0.5.x? (ev0.3.0.13)
+							case "ENUM:START":
+								inEnum = true;
+								enumName = ln[1];
+								break;
+							case "ENUM:REF":
+								string[] eqenum = ln[1].Split('=');
+								string[] dtenum = eqenum[1].Split('.');
+								intVars[eqenum[0]] = (
+									enums[dtenum[0]]
+									.Where(t => t.Item1 == dtenum[1])
+									.ElementAt(0).Item2,
+									eqenum[0][1] == '!');
+								break;
 						}
 						c.vars = vars;
 						c.intVars = intVars;
 						c.funcs = funcs;
+						c.enums = enumerators;
 					}
-					else
+					else if (inFunc && !inEnum)
 					{
-						if (ln[0] != "FUNC:END")
+						if (ln[0] != "END")
 						{
 							func.Add(l);
 						}
@@ -448,8 +470,22 @@ namespace Mattodev.MattoScript.Builder
 							funcArgs = new();
 						}
 					}
+					else if (!inFunc && inEnum)
+					{
+						if (ln[0] != "END" && ln[0] == "INTEGER:SETVAR")
+						{
+							string[] ln1 = ln[1].Split('=');
+							enum2.Add((ln1[0], Int128.Parse(ln1[1])));
+						}
+						else
+						{
+							inEnum = false;
+							enums[enumName] = enum2.ToArray();
+							enumName = "";
+							enum2 = new();
+						}
+					}
 
-					inx++;
 					c.title = vars["$con.title"].Item1;
 					Console.Title = c.title;
 					Console.ForegroundColor = (ConsoleColor)(int)intVars["$con.fgcolor"].Item1;
@@ -469,12 +505,12 @@ namespace Mattodev.MattoScript.Builder
 		public static MTSConsole runFromInterLang(string interLangCode, string fileName,
 			Dictionary<string, (string, bool)> variables,
 			Dictionary<string, (Int128, bool)> intVariables,
-			//Dictionary<string, (string, Int128)[]> enumerators,
+			Dictionary<string, (string, Int128)[]> enumerators,
 			ref MTSConsole c, bool legacyConInput = true)
-			=> runFromInterLang(interLangCode.ReplaceLineEndings("\n").Split("\n"), fileName, variables, intVariables, ref c, legacyConInput);
+			=> runFromInterLang(interLangCode.ReplaceLineEndings("\n").Split("\n"), fileName, variables, intVariables, enumerators, ref c, legacyConInput);
 
 		public static MTSConsole runFromCode(string[] lns, string fileName, ref MTSConsole c, bool legacyConInput = true)
-			=> runFromInterLang(InterLang.toInterLang(lns, fileName), fileName, otherVars, otherIntVars, ref c, legacyConInput);
+			=> runFromInterLang(InterLang.toInterLang(lns, fileName), fileName, otherVars, otherIntVars, otherEnums, ref c, legacyConInput);
 		public static MTSConsole runFromCode(string code, string fileName, ref MTSConsole c, bool legacyConInput = true)
 			=> runFromCode(code.ReplaceLineEndings("\n").Split("\n"), fileName, ref c, legacyConInput);
 	}

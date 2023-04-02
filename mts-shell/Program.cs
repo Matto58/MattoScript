@@ -85,7 +85,7 @@ namespace Mattodev.MattoScript.Shell
 						case "execfi":
 							try
 							{
-								Runner.runFromInterLang(File.ReadAllText(ln[1]), ln[1], Runner.otherVars, Runner.otherIntVars, ref con);
+								Runner.runFromInterLang(File.ReadAllText(ln[1]), ln[1], Runner.otherVars, Runner.otherIntVars, Runner.otherEnums, ref con);
 							}
 							catch (IndexOutOfRangeException)
 							{
@@ -104,8 +104,8 @@ namespace Mattodev.MattoScript.Shell
 						case "execln":
 							try
 							{
-								Console.WriteLine(String.Join(' ', ln[1..]));
-								Runner.runFromInterLang(String.Join(' ', ln[1..]), "<shell>", Runner.otherVars, Runner.otherIntVars, ref con);
+								//Console.WriteLine(String.Join(' ', ln[1..]));
+								Runner.runFromInterLang(string.Join(' ', ln[1..]), "<shell>", Runner.otherVars, Runner.otherIntVars, Runner.otherEnums, ref con);
 							}
 							catch (IndexOutOfRangeException)
 							{
