@@ -68,7 +68,9 @@ namespace Mattodev.MattoScript.Builder
 								goto end;
 							}
 							break;
-						case "halt": goto end;
+						case "halt": // halting no longer halts conversion to interlang (ev0.3.0.13)
+							oc.Add($"{i};FUNC:RETURN,");
+							break;
 						case "nop": break;
 						case "throw":
 							try
@@ -132,7 +134,7 @@ namespace Mattodev.MattoScript.Builder
 							break;
 
 						// oh boy its time for functions in mattoscript!
-						case "func.start":
+						case "func.start" or "func":
 							try
 							{
 								oc.Add($"{i};FUNC:START,{string.Join(",", ln[1..])}");
@@ -143,9 +145,9 @@ namespace Mattodev.MattoScript.Builder
 								goto end;
 							}
 							break;
-						case "func.end":
+						/*case "func.end": this can be summed up in just end (ev0.3.0.12)
 							oc.Add($"{i};FUNC:END");
-							break;
+							break;*/
 						case "func.call" or "call":
 							try
 							{
@@ -237,6 +239,41 @@ namespace Mattodev.MattoScript.Builder
 							{
 								// lineNum;INTEGER:CALC,varName,mathSymbol,[numbers,...]
 								oc.Add($"{i};INTEGER:CALC,{ln[1]},{ln[2]},{strjoin(ln[3..])}");
+							}
+							catch (IndexOutOfRangeException)
+							{
+								oc.Add($"{i};INTERNAL:ERR_THROW,NoVarVal,{fileName},{i},{ln[1]}");
+								goto end;
+							}
+							break;
+						case "enum.start" or "enum":
+							try
+							{
+								oc.Add($"{i};ENUM:START,{ln[1]}");
+							}
+							catch (IndexOutOfRangeException)
+							{
+								oc.Add($"{i};INTERNAL:ERR_THROW,TooLittleArgs,{fileName},{i},{ln.Length}");
+								goto end;
+							}
+							break;
+						case "enum.end" or "func.end" or "end":
+							oc.Add($"{i};END");
+							break;
+						case "enum.ref":
+							string[] strings;
+							try
+							{
+								try
+								{
+									strings = ln[1].Split("=");
+								}
+								catch (IndexOutOfRangeException)
+								{
+									oc.Add($"{i};INTERNAL:ERR_THROW,TooLittleArgs,{fileName},{i},{ln.Length}");
+									goto end;
+								}
+								oc.Add($"{i};ENUM:REF,{strings[0]}={strings[1]}");
 							}
 							catch (IndexOutOfRangeException)
 							{
