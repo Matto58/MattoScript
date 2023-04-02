@@ -172,6 +172,7 @@ namespace Mattodev.MattoScript.Builder
 
 			vars = c.vars;
 			intVars = c.intVars;
+			enums = c.enums;
 
 			//int inx = 0; i don't have to count index bc it's already in the line (ev0.3.0.12)
 			#endregion
