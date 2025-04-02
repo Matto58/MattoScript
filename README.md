@@ -1,6 +1,8 @@
 # MattoScript
 Scripting programming language
 
+**NOTE:** This programming language has been discontinued in favor of [Lifetime](https://github.com/Matto58/lifetime).
+
 ## Links
 - [New docs (unfinished)](https://matto58.rf.gd/mtsdocs)
 - [Legacy docs](https://github.com/Matto58/MattoScript/wiki/Documentation)
@@ -14,4 +16,4 @@ Scripting programming language
 
 | Version | Engine version | Engine revision | .NET version | Release date (supported) | Supported until |
 |:-:|:-:|:-:|:-:|:-:|:-:|
-| v1 | v0.3.0 | 13 | 7.0 | 2023-04-02 (yes) | 2023-06-02 |
+| v1 | v0.3.0 | 13 | 7.0 | 2023-04-02 (no) | 2023-06-02 |
